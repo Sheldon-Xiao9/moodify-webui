@@ -1,0 +1,241 @@
+// ===== 颜色系统 =====
+
+// 主色调
+$primary-yellow: #FFD166;
+$primary-red: #EF476F;
+$primary-green: #06D6A0;
+$primary-blue: #6A7BDB;
+
+// 渐变色
+$gradient-primary: linear-gradient(90deg, $primary-yellow 0%, $primary-red 25%, $primary-green 50%, $primary-blue 75%, $primary-yellow 100%);
+$gradient-warm: linear-gradient(135deg, $primary-yellow 0%, $primary-red 100%);
+$gradient-cool: linear-gradient(135deg, $primary-green 0%, $primary-blue 100%);
+
+// 背景色
+$bg-primary: #121212;
+$bg-secondary: #1e1e1e;
+$bg-tertiary: #2a2a2a;
+
+// 文本颜色
+$text-primary: rgba(255, 255, 255, 0.95);
+$text-secondary: rgba(255, 255, 255, 0.8);
+$text-tertiary: rgba(255, 255, 255, 0.6);
+$text-disabled: rgba(255, 255, 255, 0.4);
+
+// 透明度变量
+$overlay-light: rgba(255, 255, 255, 0.1);
+$overlay-medium: rgba(255, 255, 255, 0.2);
+$overlay-dark: rgba(0, 0, 0, 0.5);
+$overlay-darker: rgba(0, 0, 0, 0.8);
+
+// 情绪颜色映射
+$emotion-colors: (
+  happy: $primary-yellow,
+  sad: $primary-blue,
+  excited: $primary-red,
+  calm: $primary-green,
+  romantic: #E91E63,
+  melancholy: #9C27B0,
+  energetic: #FF5722,
+  peaceful: #4CAF50
+);
+
+// ===== 尺寸系统 =====
+
+// 间距
+$spacing-xs: 0.25rem;   // 4px
+$spacing-sm: 0.5rem;    // 8px
+$spacing-md: 1rem;      // 16px
+$spacing-lg: 1.5rem;    // 24px
+$spacing-xl: 2rem;      // 32px
+$spacing-2xl: 3rem;     // 48px
+$spacing-3xl: 4rem;     // 64px
+
+// 圆角
+$radius-sm: 4px;
+$radius-md: 8px;
+$radius-lg: 12px;
+$radius-xl: 16px;
+$radius-2xl: 24px;
+$radius-full: 50%;
+
+// 边框
+$border-width: 1px;
+$border-width-thick: 2px;
+$border-color: rgba(255, 255, 255, 0.1);
+$border-color-hover: rgba(255, 255, 255, 0.2);
+
+// ===== 字体系统 =====
+
+// 字体家族
+$font-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+$font-mono: 'JetBrains Mono', 'Fira Code', 'Monaco', monospace;
+
+// 字体大小
+$text-xs: 0.75rem;      // 12px
+$text-sm: 0.875rem;     // 14px
+$text-base: 1rem;       // 16px
+$text-lg: 1.125rem;     // 18px
+$text-xl: 1.25rem;      // 20px
+$text-2xl: 1.5rem;      // 24px
+$text-3xl: 1.875rem;    // 30px
+$text-4xl: 2.25rem;     // 36px
+$text-5xl: 3rem;        // 48px
+
+// 字体粗细
+$font-thin: 100;
+$font-light: 300;
+$font-normal: 400;
+$font-medium: 500;
+$font-semibold: 600;
+$font-bold: 700;
+$font-extrabold: 800;
+
+// 行高
+$leading-tight: 1.25;
+$leading-normal: 1.5;
+$leading-relaxed: 1.75;
+
+// ===== 阴影系统 =====
+
+$shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+$shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+$shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+$shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.15);
+$shadow-2xl: 0 25px 50px rgba(0, 0, 0, 0.25);
+
+// 发光效果
+$glow-yellow: 0 0 20px rgba(255, 209, 102, 0.3);
+$glow-red: 0 0 20px rgba(239, 71, 111, 0.3);
+$glow-green: 0 0 20px rgba(6, 214, 160, 0.3);
+$glow-blue: 0 0 20px rgba(106, 123, 219, 0.3);
+
+// ===== Z-index 系统 =====
+
+$z-dropdown: 1000;
+$z-sticky: 1020;
+$z-fixed: 1030;
+$z-modal-backdrop: 1040;
+$z-modal: 1050;
+$z-popover: 1060;
+$z-tooltip: 1070;
+$z-toast: 1080;
+
+// ===== 动画时间 =====
+
+$duration-fast: 0.15s;
+$duration-normal: 0.3s;
+$duration-slow: 0.5s;
+$duration-slower: 0.75s;
+
+// 缓动函数
+$ease-in: cubic-bezier(0.4, 0, 1, 1);
+$ease-out: cubic-bezier(0, 0, 0.2, 1);
+$ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+$ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+// ===== 断点系统 =====
+
+$breakpoint-sm: 640px;   // 小屏手机
+$breakpoint-md: 768px;   // 大屏手机/小平板
+$breakpoint-lg: 1024px;  // 平板/小桌面
+$breakpoint-xl: 1280px;  // 桌面
+$breakpoint-2xl: 1536px; // 大桌面
+
+// ===== 组件特定变量 =====
+
+// 按钮
+$btn-height-sm: 2rem;
+$btn-height-md: 2.5rem;
+$btn-height-lg: 3rem;
+$btn-padding-x: 1.5rem;
+$btn-border-radius: $radius-full;
+
+// 输入框
+$input-height: 3rem;
+$input-padding-x: 1.5rem;
+$input-border-radius: $radius-2xl;
+$input-border-color: $border-color;
+$input-focus-color: $primary-yellow;
+
+// 卡片
+$card-padding: $spacing-xl;
+$card-border-radius: $radius-xl;
+$card-bg: $overlay-light;
+$card-border: $border-color;
+
+// 头部
+$header-height: 10vh;
+$header-z-index: $z-sticky;
+
+// 容器
+$container-max-width: 1200px;
+$container-padding: $spacing-xl;
+
+// ===== 工具类变量 =====
+
+// 模糊效果
+$blur-sm: blur(4px);
+$blur-md: blur(8px);
+$blur-lg: blur(16px);
+$blur-xl: blur(24px);
+
+// 透明度
+$opacity-0: 0;
+$opacity-25: 0.25;
+$opacity-50: 0.5;
+$opacity-75: 0.75;
+$opacity-100: 1;
+
+// 变换
+$scale-90: scale(0.9);
+$scale-95: scale(0.95);
+$scale-100: scale(1);
+$scale-105: scale(1.05);
+$scale-110: scale(1.1);
+
+// ===== 暗色主题变量 =====
+
+:root {
+  // CSS自定义属性用于动态主题切换
+  --bg-primary: #{$bg-primary};
+  --bg-secondary: #{$bg-secondary};
+  --text-primary: #{$text-primary};
+  --text-secondary: #{$text-secondary};
+  --border-color: #{$border-color};
+  --shadow-color: rgba(0, 0, 0, 0.1);
+}
+
+// 高对比度主题
+@media (prefers-contrast: high) {
+  :root {
+    --text-primary: #ffffff;
+    --text-secondary: #ffffff;
+    --border-color: rgba(255, 255, 255, 0.5);
+  }
+}
+
+// 减少动画主题
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast: 0s;
+    --duration-normal: 0s;
+    --duration-slow: 0s;
+  }
+}
+
+// ===== 导出映射 =====
+
+// 供JavaScript使用的样式映射
+:export {
+  primaryYellow: $primary-yellow;
+  primaryRed: $primary-red;
+  primaryGreen: $primary-green;
+  primaryBlue: $primary-blue;
+  bgPrimary: $bg-primary;
+  textPrimary: $text-primary;
+  breakpointSm: $breakpoint-sm;
+  breakpointMd: $breakpoint-md;
+  breakpointLg: $breakpoint-lg;
+  breakpointXl: $breakpoint-xl;
+}

@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  
+  <!-- SEO Meta Tags -->
+  <title>Moodify - AI 情绪音乐调节器</title>
+  <meta name="description" content="基于情绪的智能音乐推荐系统，输入你的心情，获得专属音乐体验" />
+  <meta name="keywords" content="音乐推荐,情绪识别,AI音乐,个性化推荐,Spotify" />
+  <meta name="author" content="Moodify Team" />
+  
+  <!-- Open Graph Meta Tags -->
+  <meta property="og:title" content="Moodify - 情绪音乐推荐" />
+  <meta property="og:description" content="基于情绪的智能音乐推荐系统，输入你的心情，获得专属音乐体验" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://moodify.app" />
+  <meta property="og:image" content="/og-image.jpg" />
+  
+  <!-- Twitter Card Meta Tags -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Moodify - 情绪音乐推荐" />
+  <meta name="twitter:description" content="基于情绪的智能音乐推荐系统，输入你的心情，获得专属音乐体验" />
+  <meta name="twitter:image" content="/twitter-image.jpg" />
+  
+  <!-- PWA Meta Tags -->
+  <meta name="theme-color" content="#121212" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Moodify" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="manifest" href="/manifest.json" />
+  
+  <!-- Preconnect to External Resources -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://api.spotify.com" />
+  
+  <!-- DNS Prefetch -->
+  <link rel="dns-prefetch" href="//fonts.googleapis.com" />
+  <link rel="dns-prefetch" href="//api.spotify.com" />
+  
+  <!-- Critical CSS (内联关键样式) -->
+  <style>
+    /* Critical CSS for faster rendering */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    html, body {
+      height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+      background-color: #121212;
+      color: white;
+      overflow: hidden;
+    }
+    
+    #app {
+      width: 100vw;
+      height: 100vh;
+      position: relative;
+    }
+    
+    /* Loading Spinner */
+    .loading-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: #121212;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+    }
+    
+    .loading-spinner {
+      width: 50px;
+      height: 50px;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-top: 3px solid #FFD166;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 1rem;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .loading-text {
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 14px;
+      text-align: center;
+    }
+    
+    /* Hide loading screen when Vue is ready */
+    .vue-app .loading-screen {
+      display: none;
+    }
+  </style>
+  
+  <!-- Performance Hints -->
+  <link rel="preload" href="/src/main.js" as="script" />
+  
+  <!-- Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Moodify",
+    "description": "基于情绪的智能音乐推荐系统",
+    "url": "https://moodify.app",
+    "applicationCategory": "MusicApplication",
+    "operatingSystem": "Any",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "CNY"
+    }
+  }
+  </script>
+</head>
+<body>
+  <!-- Vue App Mount Point -->
+  <div id="app">
+    <!-- Loading Screen (显示在Vue应用加载前) -->
+    <div class="loading-screen">
+      <div class="loading-spinner"></div>
+      <div class="loading-text">
+        正在启动 Moodify...
+      </div>
+    </div>
+  </div>
+  
+  <!-- Error Fallback (JavaScript 禁用时显示) -->
+  <noscript>
+    <div style="
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: #121212;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: sans-serif;
+      text-align: center;
+      padding: 2rem;
+    ">
+      <h1 style="font-size: 2rem; margin-bottom: 1rem;">😔</h1>
+      <h2 style="margin-bottom: 1rem;">需要启用 JavaScript</h2>
+      <p style="color: rgba(255, 255, 255, 0.8); line-height: 1.5;">
+        Moodify 需要 JavaScript 才能正常运行。<br>
+        请在浏览器设置中启用 JavaScript 并刷新页面。
+      </p>
+    </div>
+  </noscript>
+  
+  <!-- Module Script -->
+  <script type="module" src="/src/main.js"></script>
+  
+  <!-- Analytics (如果需要) -->
+  <!-- <script async src="https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID"></script> -->
+  
+  <!-- Service Worker Registration (生产环境) -->
+  <script>
+    // 检查浏览器支持
+    if (!window.fetch || !window.Promise || !window.Map) {
+      document.body.innerHTML = `
+        <div style="
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100vw;
+          height: 100vh;
+          background: #121212;
+          color: white;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          font-family: sans-serif;
+          text-align: center;
+          padding: 2rem;
+        ">
+          <h1 style="font-size: 2rem; margin-bottom: 1rem;">🚫</h1>
+          <h2 style="margin-bottom: 1rem;">浏览器不兼容</h2>
+          <p style="color: rgba(255, 255, 255, 0.8); line-height: 1.5;">
+            您的浏览器版本过旧，无法运行 Moodify。<br>
+            请使用最新版本的 Chrome、Firefox、Safari 或 Edge 浏览器。
+          </p>
+        </div>
+      `;
+    }
+    
+    // 性能监控
+    if ('performance' in window) {
+      window.addEventListener('load', function() {
+        setTimeout(function() {
+          const perfData = performance.getEntriesByType('navigation')[0];
+          if (perfData) {
+            console.log('Page Load Time:', Math.round(perfData.loadEventEnd - perfData.navigationStart), 'ms');
+          }
+        }, 0);
+      });
+    }
+    
+    // 错误监控
+    window.addEventListener('error', function(e) {
+      console.error('Global Error:', e.error);
+      // 这里可以发送错误到监控服务
+    });
+    
+    window.addEventListener('unhandledrejection', function(e) {
+      console.error('Unhandled Promise Rejection:', e.reason);
+      // 这里可以发送错误到监控服务
+    });
+  </script>
+</body>
+</html>

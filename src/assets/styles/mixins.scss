@@ -1,0 +1,477 @@
+// ===== 响应式断点混合 =====
+
+@mixin mobile {
+  @media (max-width: #{$breakpoint-md - 1px}) {
+    @content;
+  }
+}
+
+@mixin tablet {
+  @media (min-width: #{$breakpoint-md}) and (max-width: #{$breakpoint-lg - 1px}) {
+    @content;
+  }
+}
+
+@mixin desktop {
+  @media (min-width: #{$breakpoint-lg}) {
+    @content;
+  }
+}
+
+@mixin mobile-up {
+  @media (min-width: #{$breakpoint-sm}) {
+    @content;
+  }
+}
+
+@mixin tablet-up {
+  @media (min-width: #{$breakpoint-md}) {
+    @content;
+  }
+}
+
+@mixin desktop-up {
+  @media (min-width: #{$breakpoint-lg}) {
+    @content;
+  }
+}
+
+// ===== 圆形按钮混合 =====
+
+@mixin btn-circular($size: $btn-height-md, $bg: $primary-yellow, $color: $bg-primary) {
+  width: $size;
+  height: $size;
+  border-radius: $radius-full;
+  border: none;
+  background: $bg;
+  color: $color;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all $duration-normal $ease-in-out;
+  font-weight: $font-medium;
+  
+  &:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(red($bg), green($bg), blue($bg), 0.4);
+  }
+  
+  &:active {
+    transform: scale(0.95);
+  }
+  
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+}
+
+// ===== 玻璃态效果混合 =====
+
+@mixin glassmorphism($opacity: 0.1, $blur: 10px, $border-opacity: 0.2) {
+  background: rgba(255, 255, 255, $opacity);
+  backdrop-filter: blur($blur);
+  border: 1px solid rgba(255, 255, 255, $border-opacity);
+}
+
+// ===== 文本截断混合 =====
+
+@mixin text-ellipsis($lines: 1) {
+  @if $lines == 1 {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  } @else {
+    display: -webkit-box;
+    -webkit-line-clamp: $lines;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
+
+// ===== 居中混合 =====
+
+@mixin center-absolute {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+@mixin center-flex($direction: row) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: $direction;
+}
+
+// ===== 滚动条样式混合 =====
+
+@mixin custom-scrollbar($width: 8px, $track-color: transparent, $thumb-color: rgba(255, 255, 255, 0.3)) {
+  &::-webkit-scrollbar {
+    width: $width;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: $track-color;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: $thumb-color;
+    border-radius: $width / 2;
+    
+    &:hover {
+      background: rgba(255, 255, 255, 0.5);
+    }
+  }
+  
+  // Firefox
+  scrollbar-width: thin;
+  scrollbar-color: $thumb-color $track-color;
+}
+
+// ===== 隐藏滚动条混合 =====
+
+@mixin hide-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+// ===== 动画混合 =====
+
+@mixin fade-in($duration: $duration-normal, $delay: 0s) {
+  animation: fade-in $duration $ease-out $delay both;
+  
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+}
+
+@mixin slide-up($duration: $duration-normal, $distance: 20px, $delay: 0s) {
+  animation: slide-up $duration $ease-out $delay both;
+  
+  @keyframes slide-up {
+    from {
+      opacity: 0;
+      transform: translateY($distance);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+@mixin scale-in($duration: $duration-normal, $scale-from: 0.8, $delay: 0s) {
+  animation: scale-in $duration $ease-out $delay both;
+  
+  @keyframes scale-in {
+    from {
+      opacity: 0;
+      transform: scale($scale-from);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+}
+
+@mixin bounce-in($duration: 0.6s, $delay: 0s) {
+  animation: bounce-in $duration $ease-bounce $delay both;
+  
+  @keyframes bounce-in {
+    0% {
+      opacity: 0;
+      transform: scale(0.3);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1.05);
+    }
+    70% {
+      transform: scale(0.95);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+}
+
+// ===== 悬停效果混合 =====
+
+@mixin hover-lift($distance: 5px, $shadow-color: rgba(0, 0, 0, 0.2)) {
+  transition: all $duration-normal $ease-out;
+  
+  &:hover {
+    transform: translateY(-$distance);
+    box-shadow: 0 #{$distance * 2} #{$distance * 4} $shadow-color;
+  }
+}
+
+@mixin hover-glow($color: $primary-yellow, $intensity: 0.4) {
+  transition: all $duration-normal $ease-out;
+  
+  &:hover {
+    box-shadow: 0 0 20px rgba(red($color), green($color), blue($color), $intensity);
+  }
+}
+
+// ===== 网格布局混合 =====
+
+@mixin responsive-grid($mobile: 1, $tablet: 2, $desktop: 3, $gap: $spacing-lg) {
+  display: grid;
+  gap: $gap;
+  grid-template-columns: repeat($mobile, 1fr);
+  
+  @include tablet-up {
+    grid-template-columns: repeat($tablet, 1fr);
+  }
+  
+  @include desktop-up {
+    grid-template-columns: repeat($desktop, 1fr);
+  }
+}
+
+// ===== 容器混合 =====
+
+@mixin container($max-width: $container-max-width, $padding: $container-padding) {
+  max-width: $max-width;
+  margin: 0 auto;
+  padding: 0 $padding;
+  
+  @include mobile {
+    padding: 0 #{$padding / 2};
+  }
+}
+
+// ===== 卡片样式混合 =====
+
+@mixin card($padding: $card-padding, $radius: $card-border-radius, $bg: $card-bg) {
+  background: $bg;
+  border-radius: $radius;
+  padding: $padding;
+  border: 1px solid $card-border;
+  @include glassmorphism;
+  
+  @include mobile {
+    padding: #{$padding * 0.75};
+    border-radius: #{$radius * 0.75};
+  }
+}
+
+// ===== 输入框样式混合 =====
+
+@mixin input-field($height: $input-height, $padding: $input-padding-x, $radius: $input-border-radius) {
+  height: $height;
+  padding: 0 $padding;
+  border-radius: $radius;
+  border: 2px solid $input-border-color;
+  background: rgba(255, 255, 255, 0.1);
+  color: $text-primary;
+  font-size: $text-base;
+  transition: all $duration-normal $ease-out;
+  
+  &::placeholder {
+    color: $text-tertiary;
+  }
+  
+  &:focus {
+    outline: none;
+    border-color: $input-focus-color;
+    box-shadow: 0 0 20px rgba(red($input-focus-color), green($input-focus-color), blue($input-focus-color), 0.3);
+    background: rgba(255, 255, 255, 0.15);
+  }
+  
+  @include mobile {
+    height: #{$height * 0.85};
+    padding: 0 #{$padding * 0.75};
+    font-size: $text-sm;
+  }
+}
+
+// ===== 渐变文字混合 =====
+
+@mixin gradient-text($gradient: $gradient-primary) {
+  background: $gradient;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-size: 200% 200%;
+  animation: gradient-shift 3s ease-in-out infinite;
+  
+  @keyframes gradient-shift {
+    0%, 100% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+  }
+}
+
+// ===== 加载动画混合 =====
+
+@mixin loading-spinner($size: 40px, $color: $primary-yellow, $thickness: 3px) {
+  width: $size;
+  height: $size;
+  border: $thickness solid rgba(red($color), green($color), blue($color), 0.2);
+  border-top: $thickness solid $color;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  
+  @keyframes spin {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+}
+
+// ===== 脉冲动画混合 =====
+
+@mixin pulse($color: $primary-yellow, $scale: 1.05) {
+  animation: pulse 2s ease-in-out infinite;
+  
+  @keyframes pulse {
+    0%, 100% {
+      transform: scale(1);
+      box-shadow: 0 0 0 0 rgba(red($color), green($color), blue($color), 0.7);
+    }
+    50% {
+      transform: scale($scale);
+      box-shadow: 0 0 0 10px rgba(red($color), green($color), blue($color), 0);
+    }
+  }
+}
+
+// ===== 摇摆动画混合 =====
+
+@mixin shake($intensity: 10px) {
+  animation: shake 0.5s ease-in-out;
+  
+  @keyframes shake {
+    0%, 100% {
+      transform: translateX(0);
+    }
+    25% {
+      transform: translateX(-$intensity);
+    }
+    75% {
+      transform: translateX($intensity);
+    }
+  }
+}
+
+// ===== 工具混合 =====
+
+@mixin visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@mixin clearfix {
+  &::after {
+    content: '';
+    display: table;
+    clear: both;
+  }
+}
+
+// ===== 纵横比混合 =====
+
+@mixin aspect-ratio($width: 16, $height: 9) {
+  position: relative;
+  
+  &::before {
+    content: '';
+    display: block;
+    padding-top: ($height / $width) * 100%;
+  }
+  
+  > * {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+}
+
+// ===== 三角形混合 =====
+
+@mixin triangle($size: 10px, $color: $text-primary, $direction: down) {
+  width: 0;
+  height: 0;
+  
+  @if $direction == up {
+    border-left: $size solid transparent;
+    border-right: $size solid transparent;
+    border-bottom: $size solid $color;
+  } @else if $direction == down {
+    border-left: $size solid transparent;
+    border-right: $size solid transparent;
+    border-top: $size solid $color;
+  } @else if $direction == left {
+    border-top: $size solid transparent;
+    border-bottom: $size solid transparent;
+    border-right: $size solid $color;
+  } @else if $direction == right {
+    border-top: $size solid transparent;
+    border-bottom: $size solid transparent;
+    border-left: $size solid $color;
+  }
+}
+
+// ===== 无障碍混合 =====
+
+@mixin focus-visible($color: $primary-yellow) {
+  &:focus-visible {
+    outline: 2px solid $color;
+    outline-offset: 2px;
+  }
+}
+
+@mixin reduce-motion {
+  @media (prefers-reduced-motion: reduce) {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+// ===== 打印样式混合 =====
+
+@mixin print-hidden {
+  @media print {
+    display: none !important;
+  }
+}
+
+@mixin print-only {
+  display: none;
+  
+  @media print {
+    display: block;
+  }
+}
