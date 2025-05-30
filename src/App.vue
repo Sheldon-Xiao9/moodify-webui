@@ -117,11 +117,11 @@ watch(() => store.currentView, (newView) => {
 // 初始化应用
 const initializeApp = async () => {
   try {
-    isGlobalLoading.value = true
-    loadingText.value = '初始化应用...'
+    // isGlobalLoading.value = true
+    // loadingText.value = '初始化应用...'
     
-    // 模拟初始化延迟
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    // // 模拟初始化延迟
+    // await new Promise(resolve => setTimeout(resolve, 1000))
     
     // 设置初始状态
     store.setCurrentView('home')
