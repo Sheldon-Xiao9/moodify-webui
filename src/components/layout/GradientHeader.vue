@@ -3,7 +3,11 @@
     <div class="gradient-background" />
     <div class="header-content">
       <div class="logo-section">
-        <div class="logo-icon">🎵</div>
+        <img 
+          src="@/assets/logo.svg" 
+          alt="Moodify" 
+          class="logo-icon"
+        />
         <h1 class="app-title">Moodify</h1>
       </div>
     </div>
@@ -86,17 +90,27 @@ onUnmounted(() => {
 }
 
 .logo-icon {
-  font-size: 2rem;
+  height: 3rem;
+  width: auto;
+  // 减少SVG图标上移幅度，从-8px调整为-4px
+  transform: translateY(-4px);
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
   animation: float 3s ease-in-out infinite;
+  
+  // 确保SVG颜色保持原始渐变
+  & path {
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+  }
 }
 
 @keyframes float {
   0%, 100% {
-    transform: translateY(0px);
+    // 在基础上移(-4px)的基础上进行浮动
+    transform: translateY(-4px);
   }
   50% {
-    transform: translateY(-3px);
+    // 浮动到稍高位置
+    transform: translateY(-7px);
   }
 }
 
@@ -116,21 +130,45 @@ onUnmounted(() => {
   }
   
   .logo-icon {
-    font-size: 1.5rem;
+    height: 2.5rem;
+    // 移动端减少上移幅度，从-6px调整为-3px
+    transform: translateY(-3px);
   }
   
   .app-title {
     font-size: 1.4rem;
   }
+  
+  // 移动端的浮动动画
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(-3px);
+    }
+    50% {
+      transform: translateY(-6px);
+    }
+  }
 }
 
 @media (min-width: 768px) and (max-width: 1023px) {
   .logo-icon {
-    font-size: 1.8rem;
+    height: 2.8rem;
+    // 平板端减少上移幅度，从-7px调整为-3.5px
+    transform: translateY(-3.5px);
   }
   
   .app-title {
     font-size: 1.6rem;
+  }
+  
+  // 平板端的浮动动画
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(-3.5px);
+    }
+    50% {
+      transform: translateY(-6.5px);
+    }
   }
 }
 
