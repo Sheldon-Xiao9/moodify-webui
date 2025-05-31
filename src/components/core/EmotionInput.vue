@@ -3,10 +3,15 @@
     <!-- 引导文字 -->
     <div 
       ref="guideTextRef"
-      class="guide-text"
+      class="guide-text-section"
       :class="{ 'hidden': isInputActive }"
     >
-      来跟我说说你今天的心情吧！
+      <h1 class="main-guide-text">来跟我说说你今天的心情吧！</h1>
+      <p class="sub-guide-text">
+        向我描述你的感受，我会推荐让你的情绪得到共鸣的音乐
+        <br>
+        <span class="highlight">让美妙的旋律陪伴你的每一种心情 🎵</span>
+      </p>
     </div>
     
     <!-- 开始按钮 -->
@@ -107,7 +112,7 @@ const handleInputFocus = () => {
   emit('focus')
 }
 
-// 处理输入框失焦 - 简化版本
+// 处理输入框失焦
 const handleInputBlur = () => {
   isInputFocused.value = false
   
@@ -166,26 +171,59 @@ defineExpose({
   gap: 2rem;
 }
 
-.guide-text {
-  font-size: 1.5rem;
-  color: rgba(255, 255, 255, 0.9);
+.guide-text-section {
   text-align: center;
-  transition: all 0.3s ease;
-  font-weight: 300;
-  letter-spacing: 0.5px;
+  transition: all 0.5s ease;
+  max-width: 600px;
   
   &.hidden {
     opacity: 0;
-    transform: translateY(-20px);
+    transform: translateY(-30px);
   }
+}
+
+.main-guide-text {
+  font-size: 2.8rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.95);
+  margin-bottom: 1.5rem;
+  letter-spacing: 0.5px;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  line-height: 1.2;
   
   @media (max-width: 767px) {
-    font-size: 1.2rem;
-    padding: 0 1rem;
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
   }
   
   @media (min-width: 768px) and (max-width: 1023px) {
-    font-size: 1.3rem;
+    font-size: 2.2rem;
+    margin-bottom: 1.2rem;
+  }
+}
+
+.sub-guide-text {
+  font-size: 1.2rem;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.6;
+  margin: 0;
+  
+  .highlight {
+    color: #FFD166;
+    font-weight: 500;
+    text-shadow: 0 1px 5px rgba(255, 209, 102, 0.4);
+  }
+  
+  @media (max-width: 767px) {
+    font-size: 1rem;
+    br {
+      display: none;
+    }
+  }
+  
+  @media (min-width: 768px) and (max-width: 1023px) {
+    font-size: 1.1rem;
   }
 }
 
@@ -229,7 +267,7 @@ defineExpose({
   }
   
   &.processing {
-    transform: translateY(-20vh) scale(0.7);
+    transform: translateY(-20vh) scale(0.5);
   }
 }
 
@@ -383,8 +421,12 @@ defineExpose({
 
 // 响应式调整
 @media (max-width: 480px) {
-  .guide-text {
-    font-size: 1rem;
+  .main-guide-text {
+    font-size: 1.5rem;
+  }
+  
+  .sub-guide-text {
+    font-size: 0.9rem;
   }
   
   .input-container.active {
@@ -400,6 +442,22 @@ defineExpose({
     width: 45px;
     height: 45px;
     margin-left: 0.5rem;
+  }
+}
+
+// 引导文字动画
+.guide-text-section {
+  animation: fadeInUp 1s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 </style>

@@ -670,8 +670,8 @@ export class EmojiCanvasRenderer {
     this.ctx.translate(leftBrowX, leftBrowY)
     this.ctx.rotate(((params.eyebrowAngle || 0) + this.faceElements.leftEyebrow.rotation) * Math.PI / 180)
     this.ctx.beginPath()
-    this.ctx.moveTo(-8, 0)
-    this.ctx.lineTo(8, 0)
+    this.ctx.moveTo(-10, 0)
+    this.ctx.lineTo(10, 0)
     this.ctx.stroke()
     this.ctx.restore()
     
@@ -680,8 +680,8 @@ export class EmojiCanvasRenderer {
     this.ctx.translate(rightBrowX, rightBrowY)
     this.ctx.rotate((-(params.eyebrowAngle || 0) + this.faceElements.rightEyebrow.rotation) * Math.PI / 180)
     this.ctx.beginPath()
-    this.ctx.moveTo(-8, 0)
-    this.ctx.lineTo(8, 0)
+    this.ctx.moveTo(-10, 0)
+    this.ctx.lineTo(10, 0)
     this.ctx.stroke()
     this.ctx.restore()
     
