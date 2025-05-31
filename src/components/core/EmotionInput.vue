@@ -8,7 +8,7 @@
     >
       <h1 class="main-guide-text">来跟我说说你今天的心情吧！</h1>
       <p class="sub-guide-text">
-        向我描述你的感受，我会推荐让你的情绪得到共鸣的音乐
+        向我分享你的感受，无论是快乐、悲伤还是愤怒，我会用音乐来回应你
         <br>
         <span class="highlight">让美妙的旋律陪伴你的每一种心情 🎵</span>
       </p>
