@@ -92,9 +92,9 @@
           @complete="handleProcessComplete"
         />
         
-        <!-- 情绪分析摘要 -->
-        <div class="emotion-analysis" v-if="emotionAnalysis">
-          {{ emotionAnalysis }}
+        <!-- AI返回的情绪分析结果 - 只在100%完成后显示 -->
+        <div class="emotion-analysis" v-if="showAIResult && aiEmotionResult">
+          AI识别情绪：{{ aiEmotionResult }}
         </div>
       </div>
     </Transition>
@@ -121,12 +121,14 @@ const progressRef = ref(null)
 const currentMood = ref('happy')
 const isEmojiReady = ref(false)
 const submittedEmotion = ref('')
+const aiEmotionResult = ref('')
+const showAIResult = ref(false)
+const currentProgress = ref(0)
 
 // 计算属性
 const isInputActive = computed(() => store.isInputActive)
 const isProcessing = computed(() => store.isProcessing)
 const showProgress = computed(() => isProcessing.value)
-const emotionAnalysis = computed(() => store.emotionAnalysis)
 
 onMounted(() => {
   // 初始化状态
@@ -140,6 +142,8 @@ watch(isProcessing, (newValue) => {
     nextTick(() => {
       progressRef.value.startProgress()
     })
+    // 重置AI结果显示状态
+    showAIResult.value = false
   }
 })
 
@@ -161,33 +165,21 @@ const handleInputStart = () => {
 }
 
 // 处理情绪提交
-const handleEmotionSubmit = (emotionText) => {
+const handleEmotionSubmit = async (emotionText) => {
   submittedEmotion.value = emotionText
-  
-  // 分析用户输入的情绪
-  const analyzedEmotion = analyzeEmotion(emotionText)
-  
-  // 更新表情状态
-  if (emojiRef.value) {
-    emojiRef.value.updateMood(analyzedEmotion.mood)
-  }
-  
-  // 设置情绪分析结果
-  const analysis = `根据「${emotionText}」匹配到「${analyzedEmotion.label}」`
-  store.setEmotionAnalysis(analysis)
   
   // 开始处理
   store.setProcessing(true)
   
   // 发射事件给父组件
   emit('emotion-submitted', {
-    text: emotionText,
-    mood: analyzedEmotion.mood,
-    emotions: analyzedEmotion.emotions,
-    analysis: analysis
+    text: emotionText
   })
   
   console.log('Emotion submitted:', emotionText)
+  
+  // 启动AI分析处理（后台进行）
+  processEmotionWithAI(emotionText)
 }
 
 // 处理输入失焦
@@ -202,6 +194,7 @@ const handleInputFocus = () => {
 
 // 处理进度更新
 const handleProgress = (progress) => {
+  currentProgress.value = progress
   console.log('Progress:', progress + '%')
 }
 
@@ -210,98 +203,110 @@ const handleStageChange = (stage, text) => {
   console.log('Stage changed:', stage, text)
 }
 
-// 处理处理完成
+// 处理处理完成（进度条到达100%）
 const handleProcessComplete = () => {
   console.log('Processing complete')
+  
+  // 只有在进度条完成后才显示AI结果
+  if (aiEmotionResult.value) {
+    showAIResult.value = true
+    // 根据AI返回的情绪更新表情
+    updateEmojiByAIResult(aiEmotionResult.value)
+  }
   
   // 发射完成事件
   emit('processing-complete', {
     emotion: submittedEmotion.value,
+    aiResult: aiEmotionResult.value,
     mood: currentMood.value
   })
 }
 
-// 情绪分析函数
-const analyzeEmotion = (text) => {
+// AI情绪分析处理函数（后台进行，不影响进度条）
+const processEmotionWithAI = async (emotionText) => {
+  try {
+    // TODO: 实际的后端调用逻辑
+    // const response = await fetch('/api/analyze-emotion', {
+    //   method: 'POST',
+    //   headers: {
+    //     'Content-Type': 'application/json',
+    //   },
+    //   body: JSON.stringify({ text: emotionText })
+    // })
+    // const data = await response.json()
+    // aiEmotionResult.value = data.emotion
+    
+    // 测试逻辑：模拟AI分析结果
+    const mockAIResult = await mockAIAnalysis(emotionText)
+    aiEmotionResult.value = mockAIResult.emotion
+    
+  } catch (error) {
+    console.error('AI情绪分析失败:', error)
+    // 错误处理：使用默认情绪
+    aiEmotionResult.value = '中性'
+  }
+}
+
+// 模拟AI分析的测试函数
+const mockAIAnalysis = async (text) => {
+  // 模拟API调用延迟（通常在3-4秒内完成，确保在进度条完成前）
+  await new Promise(resolve => setTimeout(resolve, 3000))
+  
+  // 模拟AI返回的情绪词库 - 只使用canvasRenderer支持的5种表情
   const emotionKeywords = {
-    happy: {
-      keywords: ['开心', '快乐', '兴奋', '愉快', '高兴', '喜悦', '欢乐', '满足', '幸福'],
-      mood: 'happy',
-      label: '快乐'
-    },
-    sad: {
-      keywords: ['难过', '伤心', '沮丧', '失落', '悲伤', '痛苦', '忧郁', '低落'],
-      mood: 'sad',
-      label: '悲伤'
-    },
-    calm: {
-      keywords: ['平静', '放松', '安静', '宁静', '舒缓', '淡定', '冷静', '安详'],
-      mood: 'calm',
-      label: '平静'
-    },
-    excited: {
-      keywords: ['激动', '兴奋', '热情', '狂欢', '疯狂', '亢奋', '刺激'],
-      mood: 'excited',
-      label: '兴奋'
-    },
-    melancholy: {
-      keywords: ['忧郁', '怀念', '思念', '孤独', '寂寞', '惆怅', '怀旧'],
-      mood: 'melancholy',
-      label: '忧郁'
-    },
-    energetic: {
-      keywords: ['充满活力', '有精神', '活跃', '动感', '有力量', '精力充沛'],
-      mood: 'excited',
-      label: '充满活力'
-    }
+    '快乐': ['开心', '高兴', '愉快', '喜悦', '幸福', '满足', '开朗'],
+    '悲伤': ['难过', '伤心', '沮丧', '失落', '痛苦', '忧郁', '孤独'],
+    '愤怒': ['生气', '愤怒', '恼火', '暴躁', '烦躁', '不爽', '愤慨'],
+    '兴奋': ['激动', '兴奋', '热情', '狂欢', '疯狂', '亢奋', '刺激', '振奋'],
+    '烦躁': ['烦躁', '烦恼', '不耐烦', '厌倦', '郁闷', '无聊', '焦躁']
   }
   
   const lowerText = text.toLowerCase()
-  let matchedEmotions = []
-  let primaryMood = 'happy'
-  let primaryLabel = '快乐'
   
-  // 检查关键词匹配
-  for (const [emotion, config] of Object.entries(emotionKeywords)) {
-    const hasMatch = config.keywords.some(keyword => 
-      lowerText.includes(keyword)
-    )
-    
+  // 简单的关键词匹配
+  for (const [emotion, keywords] of Object.entries(emotionKeywords)) {
+    const hasMatch = keywords.some(keyword => lowerText.includes(keyword))
     if (hasMatch) {
-      matchedEmotions.push(emotion)
-      primaryMood = config.mood
-      primaryLabel = config.label
+      return {
+        emotion: emotion,
+        confidence: 0.85,
+        songs: [] // 后端会返回匹配的歌曲列表
+      }
     }
   }
   
-  // 如果没有匹配，根据文本长度和内容进行简单推测
-  if (matchedEmotions.length === 0) {
-    if (lowerText.includes('!') || lowerText.includes('！')) {
-      primaryMood = 'excited'
-      primaryLabel = '兴奋'
-      matchedEmotions.push('excited')
-    } else if (lowerText.includes('...') || lowerText.includes('。。。')) {
-      primaryMood = 'melancholy'
-      primaryLabel = '忧郁'
-      matchedEmotions.push('melancholy')
-    } else {
-      primaryMood = 'happy'
-      primaryLabel = '快乐'
-      matchedEmotions.push('happy')
-    }
-  }
-  
+  // 默认返回
   return {
-    mood: primaryMood,
-    label: primaryLabel,
-    emotions: matchedEmotions,
-    confidence: matchedEmotions.length > 0 ? 0.8 : 0.5
+    emotion: '快乐',
+    confidence: 0.5,
+    songs: []
+  }
+}
+
+// 根据AI返回结果更新表情 - 只使用canvasRenderer支持的5种表情
+const updateEmojiByAIResult = (emotion) => {
+  const emotionToMoodMap = {
+    '快乐': 'happy',
+    '悲伤': 'sad', 
+    '愤怒': 'angry',
+    '兴奋': 'excited',
+    '烦躁': 'annoyed'
+  }
+  
+  const mood = emotionToMoodMap[emotion] || 'happy'
+  currentMood.value = mood
+  
+  if (emojiRef.value) {
+    emojiRef.value.updateMood(mood)
   }
 }
 
 // 重置视图状态
 const resetView = () => {
   submittedEmotion.value = ''
+  aiEmotionResult.value = ''
+  showAIResult.value = false
+  currentProgress.value = 0
   currentMood.value = 'happy'
   
   if (emotionInputRef.value) {
@@ -318,11 +323,14 @@ const resetView = () => {
 // 暴露方法给父组件
 defineExpose({
   resetView,
-  analyzeEmotion,
   setMood: (mood) => {
-    currentMood.value = mood
-    if (emojiRef.value) {
-      emojiRef.value.updateMood(mood)
+    // 只允许设置canvasRenderer支持的表情
+    const validMoods = ['happy', 'sad', 'angry', 'excited', 'annoyed']
+    if (validMoods.includes(mood)) {
+      currentMood.value = mood
+      if (emojiRef.value) {
+        emojiRef.value.updateMood(mood)
+      }
     }
   }
 })
@@ -724,11 +732,24 @@ defineExpose({
   color: rgba(255, 255, 255, 0.9);
   font-size: 1rem;
   backdrop-filter: blur(10px);
+  // 添加渐入动画
+  animation: fadeInUp 0.5s ease-out;
   
   @media (max-width: 767px) {
     font-size: 0.9rem;
     padding: 0.75rem 1.5rem;
     margin-top: 1.5rem;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 

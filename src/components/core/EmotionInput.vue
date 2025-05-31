@@ -267,7 +267,7 @@ defineExpose({
   }
   
   &.processing {
-    transform: translateY(-20vh) scale(0.5);
+    transform: translateY(-40vh) scale(0.7);
   }
 }
 
