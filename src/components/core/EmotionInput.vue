@@ -132,6 +132,11 @@ const handleSubmit = () => {
   const text = emotionText.value.trim()
   if (!text || isProcessing.value) return
   
+  // 主动失焦输入框
+  if (inputFieldRef.value) {
+    inputFieldRef.value.blur()
+  }
+  
   emit('submit', text)
   playSubmitAnimation()
 }
