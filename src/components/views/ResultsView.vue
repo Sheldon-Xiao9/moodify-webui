@@ -30,7 +30,9 @@
         :disabled="isRefreshing"
         :class="{ 'refreshing': isRefreshing }"
       >
-        <span class="refresh-icon">🔄</span>
+        <svg class="refresh-icon" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+        </svg>
       </button>
       
       <!-- 返回按钮 -->
@@ -38,7 +40,9 @@
         class="back-button btn-circular"
         @click="handleBack"
       >
-        <span class="back-icon">←</span>
+        <svg class="back-icon" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+        </svg>
       </button>
     </div>
     
@@ -50,10 +54,17 @@
     
     <!-- 错误状态 -->
     <div class="error-state" v-if="hasError">
-      <div class="error-icon">😔</div>
+      <div class="error-icon">
+        <svg viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+        </svg>
+      </div>
       <h3 class="error-title">获取推荐失败</h3>
       <p class="error-message">{{ errorMessage }}</p>
       <button class="retry-button" @click="handleRetry">
+        <svg viewBox="0 0 24 24" fill="currentColor">
+          <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+        </svg>
         重试
       </button>
     </div>
@@ -295,25 +306,29 @@ defineExpose({
   gap: 1.5rem;
   align-content: start;
   overflow-y: auto;
+  padding-left: 5rem;
+  padding-right: 5rem;
   padding-bottom: 2rem;
   
   // 桌面端：2列
   @media (min-width: 1024px) {
     grid-template-columns: repeat(2, 1fr);
     justify-items: center;
+    column-gap: 1rem;
+    row-gap: 2.5rem;
   }
   
   // 移动端：1列
   @media (max-width: 767px) {
     grid-template-columns: 1fr;
-    gap: 1rem;
+    gap: 0.8rem;
     justify-items: center;
   }
   
   // 平板端：1列（较宽）
   @media (min-width: 768px) and (max-width: 1023px) {
     grid-template-columns: 1fr;
-    gap: 1.25rem;
+    gap: 0.9rem;
     justify-items: center;
   }
   
@@ -360,10 +375,33 @@ defineExpose({
 .refresh-button,
 .back-button {
   flex-shrink: 0;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.9);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  
+  svg {
+    width: 24px;
+    height: 24px;
+  }
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.05);
+  }
   
   &.refreshing {
     .refresh-icon {
-      animation: spin 1s linear infinite;
+      animation: refreshSpin 1s linear infinite;
     }
   }
   
@@ -373,7 +411,7 @@ defineExpose({
   }
 }
 
-@keyframes spin {
+@keyframes refreshSpin {
   from {
     transform: rotate(0deg);
   }
@@ -384,12 +422,11 @@ defineExpose({
 
 .refresh-icon,
 .back-icon {
-  font-size: 1.2rem;
   transition: transform 0.3s ease;
 }
 
 .refresh-button:hover:not(:disabled) .refresh-icon {
-  transform: rotate(180deg);
+  transform: rotate(90deg);
 }
 
 .back-button:hover .back-icon {
@@ -418,7 +455,7 @@ defineExpose({
   border: 4px solid rgba(255, 255, 255, 0.2);
   border-top: 4px solid #FFD166;
   border-radius: 50%;
-  animation: spin 1s linear infinite;
+  animation: refreshSpin 1s linear infinite;
   margin-bottom: 1rem;
 }
 
@@ -439,8 +476,15 @@ defineExpose({
 }
 
 .error-icon {
-  font-size: 4rem;
-  margin-bottom: 1rem;
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 1rem auto;
+  
+  svg {
+    width: 100%;
+    height: 100%;
+    color: #EF476F;
+  }
 }
 
 .error-title {
@@ -467,6 +511,14 @@ defineExpose({
   font-weight: 500;
   cursor: pointer;
   transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  
+  svg {
+    width: 18px;
+    height: 18px;
+  }
   
   &:hover {
     background: #FFA726;
@@ -501,6 +553,11 @@ defineExpose({
   
   .results-grid {
     gap: 1rem;
+    
+    @media (min-width: 1024px) {
+      column-gap: 0.2rem; // 低屏幕高度时进一步减少
+      row-gap: 0.8rem;
+    }
   }
   
   .bottom-controls {
@@ -514,8 +571,13 @@ defineExpose({
   }
   
   .results-grid {
-    gap: 0.75rem;
+    gap: 0.5rem;
     padding-bottom: 1rem;
+    
+    @media (min-width: 1024px) {
+      column-gap: 0.1rem; // 极小屏幕时最小间距
+      row-gap: 0.7rem;
+    }
   }
 }
 
@@ -542,6 +604,12 @@ defineExpose({
   
   .bottom-controls {
     border-top: 2px solid rgba(255, 255, 255, 0.3);
+  }
+  
+  .refresh-button,
+  .back-button {
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.5);
   }
 }
 

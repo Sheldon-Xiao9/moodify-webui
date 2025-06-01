@@ -99,12 +99,14 @@ onMounted(() => {
   // 监听窗口事件
   window.addEventListener('beforeunload', handleBeforeUnload)
   window.addEventListener('error', handleGlobalError)
+  document.addEventListener('keydown', handleKeyPress)
 })
 
 onUnmounted(() => {
   // 清理事件监听器
   window.removeEventListener('beforeunload', handleBeforeUnload)
   window.removeEventListener('error', handleGlobalError)
+  document.removeEventListener('keydown', handleKeyPress)
 })
 
 // 监听store状态变化
@@ -117,12 +119,6 @@ watch(() => store.currentView, (newView) => {
 // 初始化应用
 const initializeApp = async () => {
   try {
-    // isGlobalLoading.value = true
-    // loadingText.value = '初始化应用...'
-    
-    // // 模拟初始化延迟
-    // await new Promise(resolve => setTimeout(resolve, 1000))
-    
     // 设置初始状态
     store.setCurrentView('home')
     currentView.value = 'home'
@@ -138,10 +134,11 @@ const initializeApp = async () => {
 
 // 处理情绪提交
 const handleEmotionSubmitted = async (emotionData) => {
+  console.log('Emotion submitted:', emotionData)
   currentEmotion.value = emotionData
   
+  // 提交后立即开始生成音乐推荐数据
   try {
-    // 开始加载音乐推荐
     await fetchMusicRecommendations(emotionData)
   } catch (error) {
     console.error('Failed to fetch recommendations:', error)
@@ -155,10 +152,26 @@ const handleEmotionSubmitted = async (emotionData) => {
 }
 
 // 处理处理完成
-const handleProcessingComplete = () => {
+const handleProcessingComplete = (data) => {
+  console.log('Processing complete:', data)
+  
+  // 确保有音乐数据再切换视图
+  if (musicTracks.value.length === 0) {
+    console.log('No tracks available, generating mock data...')
+    // 如果没有音乐数据，生成默认数据
+    const mockData = {
+      text: data.emotion || '快乐',
+      mood: data.mood || 'happy',
+      aiResult: data.aiResult || '快乐'
+    }
+    musicTracks.value = generateMockTracks(mockData)
+  }
+  
   // 切换到结果视图
   currentView.value = 'results'
   store.setCurrentView('results')
+  
+  console.log('Switched to results view with tracks:', musicTracks.value.length)
 }
 
 // 获取音乐推荐
@@ -170,10 +183,11 @@ const fetchMusicRecommendations = async (emotionData) => {
     // 模拟API调用
     await simulateMusicAPI(emotionData)
     
-    console.log('Music recommendations fetched successfully')
+    console.log('Music recommendations fetched successfully:', musicTracks.value.length, 'tracks')
   } catch (error) {
     hasError.value = true
     errorMessage.value = error.message || '获取推荐失败'
+    console.error('Music API error:', error)
     throw error
   } finally {
     isLoadingTracks.value = false
@@ -182,59 +196,85 @@ const fetchMusicRecommendations = async (emotionData) => {
 
 // 模拟音乐API调用
 const simulateMusicAPI = async (emotionData) => {
-  // 模拟网络延迟
-  await new Promise(resolve => setTimeout(resolve, 2000))
+  // 模拟网络延迟（在进度条运行期间完成）
+  await new Promise(resolve => setTimeout(resolve, 1500))
   
   // 根据情绪生成模拟数据
   const mockTracks = generateMockTracks(emotionData)
   musicTracks.value = mockTracks
   
-  // 模拟偶尔的API错误
-  if (Math.random() < 0.1) { // 10% 概率失败
-    throw new Error('网络连接超时，请稍后重试')
-  }
+  console.log('Generated mock tracks:', mockTracks.length)
+  
+  // 模拟偶尔的API错误（测试环境下禁用）
+  // if (Math.random() < 0.05) { // 5% 概率失败
+  //   throw new Error('网络连接超时，请稍后重试')
+  // }
 }
 
 // 生成模拟音乐数据
 const generateMockTracks = (emotionData) => {
-  const { mood, emotions } = emotionData
+  const mood = emotionData.aiResult || emotionData.mood || 'happy'
+  const emotionText = emotionData.text || ''
+  
+  console.log('Generating tracks for mood:', mood, 'emotion:', emotionText)
   
   // 基础模板
   const trackTemplates = {
-    happy: [
-      { name: 'Sunshine Melody', artist: 'Happy Vibes', genre: 'Pop' },
-      { name: 'Dancing in Light', artist: 'Joy Collective', genre: 'Electronic' },
-      { name: 'Bright Days Ahead', artist: 'Optimist Band', genre: 'Indie' }
+    '快乐': [
+      { name: 'Sunshine Melody', artist: 'Happy Vibes', genre: 'Pop', emotions: ['happy', 'energetic'] },
+      { name: 'Dancing in Light', artist: 'Joy Collective', genre: 'Electronic', emotions: ['happy', 'excited'] },
+      { name: 'Bright Days Ahead', artist: 'Optimist Band', genre: 'Indie', emotions: ['happy', 'peaceful'] },
+      { name: 'Golden Hour', artist: 'Cheerful Sounds', genre: 'Folk', emotions: ['happy', 'calm'] },
+      { name: 'Celebration Time', artist: 'Party Makers', genre: 'Dance', emotions: ['happy', 'energetic'] },
+      { name: 'Feel Good Vibes', artist: 'Good Mood Collective', genre: 'Pop', emotions: ['happy', 'uplifting'] }
     ],
-    sad: [
-      { name: 'Rainy Reflections', artist: 'Melancholy Soul', genre: 'Indie Folk' },
-      { name: 'Tears in Time', artist: 'Emotional Depth', genre: 'Alternative' },
-      { name: 'Silent Sorrow', artist: 'Deep Feelings', genre: 'Ambient' }
+    '悲伤': [
+      { name: 'Rainy Reflections', artist: 'Melancholy Soul', genre: 'Indie Folk', emotions: ['sad', 'melancholy'] },
+      { name: 'Tears in Time', artist: 'Emotional Depth', genre: 'Alternative', emotions: ['sad', 'emotional'] },
+      { name: 'Silent Sorrow', artist: 'Deep Feelings', genre: 'Ambient', emotions: ['sad', 'peaceful'] },
+      { name: 'Empty Rooms', artist: 'Lonely Hearts', genre: 'Indie', emotions: ['sad', 'lonely'] },
+      { name: 'Fading Memories', artist: 'Nostalgic Echoes', genre: 'Singer-Songwriter', emotions: ['sad', 'nostalgic'] },
+      { name: 'Heavy Heart', artist: 'Emotional Journey', genre: 'Alternative Rock', emotions: ['sad', 'heavy'] }
     ],
-    calm: [
-      { name: 'Peaceful Waters', artist: 'Zen Masters', genre: 'Ambient' },
-      { name: 'Gentle Breeze', artist: 'Nature Sounds', genre: 'New Age' },
-      { name: 'Meditation Flow', artist: 'Calm Collective', genre: 'Instrumental' }
+    '愤怒': [
+      { name: 'Burning Rage', artist: 'Fury Band', genre: 'Metal', emotions: ['angry', 'intense'] },
+      { name: 'Break the Chains', artist: 'Rebellion', genre: 'Rock', emotions: ['angry', 'powerful'] },
+      { name: 'Storm Inside', artist: 'Tempest', genre: 'Hard Rock', emotions: ['angry', 'aggressive'] },
+      { name: 'Fight Back', artist: 'Resistance', genre: 'Punk', emotions: ['angry', 'defiant'] },
+      { name: 'Inner Fire', artist: 'Flame Throwers', genre: 'Alternative Metal', emotions: ['angry', 'fierce'] },
+      { name: 'Shattered Glass', artist: 'Broken Silence', genre: 'Industrial', emotions: ['angry', 'destructive'] }
     ],
-    excited: [
-      { name: 'Electric Energy', artist: 'High Voltage', genre: 'Electronic' },
-      { name: 'Pump It Up', artist: 'Energy Boost', genre: 'Dance' },
-      { name: 'Adrenaline Rush', artist: 'Excitement Inc', genre: 'Rock' }
+    '兴奋': [
+      { name: 'Electric Energy', artist: 'High Voltage', genre: 'Electronic', emotions: ['excited', 'energetic'] },
+      { name: 'Pump It Up', artist: 'Energy Boost', genre: 'Dance', emotions: ['excited', 'pumped'] },
+      { name: 'Adrenaline Rush', artist: 'Excitement Inc', genre: 'EDM', emotions: ['excited', 'intense'] },
+      { name: 'Sky High', artist: 'Elevation', genre: 'Trance', emotions: ['excited', 'euphoric'] },
+      { name: 'Maximum Drive', artist: 'Turbo Charge', genre: 'Electronic Rock', emotions: ['excited', 'powerful'] },
+      { name: 'Velocity', artist: 'Speed Demons', genre: 'Drum & Bass', emotions: ['excited', 'fast'] }
+    ],
+    '烦躁': [
+      { name: 'Restless Mind', artist: 'Anxiety Collective', genre: 'Alternative', emotions: ['annoyed', 'restless'] },
+      { name: 'Frustration', artist: 'Tension Relief', genre: 'Post-Rock', emotions: ['annoyed', 'tense'] },
+      { name: 'Irritation', artist: 'Stressed Out', genre: 'Indie Rock', emotions: ['annoyed', 'irritated'] },
+      { name: 'Edge of Patience', artist: 'Breaking Point', genre: 'Grunge', emotions: ['annoyed', 'edgy'] },
+      { name: 'Noise in Head', artist: 'Mental Static', genre: 'Experimental', emotions: ['annoyed', 'chaotic'] },
+      { name: 'Overwhelmed', artist: 'Pressure Cooker', genre: 'Math Rock', emotions: ['annoyed', 'complex'] }
     ]
   }
   
-  const templates = trackTemplates[mood] || trackTemplates.happy
+  // 默认使用快乐模板
+  const templates = trackTemplates[mood] || trackTemplates['快乐']
   
   return templates.map((template, index) => ({
     id: `track_${mood}_${index + 1}`,
     name: template.name,
     artist: template.artist,
     albumName: `${template.genre} Collection`,
-    albumCover: `https://picsum.photos/300/300?random=${mood}_${index}`,
+    albumCover: `https://picsum.photos/300/300?random=${mood}_${index + 1}`,
     duration: 180 + Math.floor(Math.random() * 120), // 3-5分钟
     previewUrl: `https://example.com/preview_${mood}_${index}.mp3`,
     spotifyUrl: `https://open.spotify.com/track/example_${mood}_${index}`,
-    emotions: emotions || [mood],
+    emotions: template.emotions,
     popularity: 60 + Math.floor(Math.random() * 40), // 60-100
     releaseDate: `2023-${String(Math.floor(Math.random() * 12) + 1).padStart(2, '0')}-${String(Math.floor(Math.random() * 28) + 1).padStart(2, '0')}`,
     genre: template.genre
@@ -261,11 +301,14 @@ const handleBack = () => {
   musicTracks.value = []
   currentEmotion.value = null
   hasError.value = false
+  isLoadingTracks.value = false
   
   // 重置首页状态
   if (homeViewRef.value) {
     homeViewRef.value.resetView()
   }
+  
+  console.log('Returned to home view')
 }
 
 // 处理重试
@@ -341,15 +384,6 @@ const handleKeyPress = (event) => {
     handleRetry()
   }
 }
-
-// 添加键盘事件监听
-onMounted(() => {
-  document.addEventListener('keydown', handleKeyPress)
-})
-
-onUnmounted(() => {
-  document.removeEventListener('keydown', handleKeyPress)
-})
 </script>
 
 <style lang="scss" scoped>

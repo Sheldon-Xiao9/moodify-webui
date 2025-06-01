@@ -86,7 +86,7 @@
         <ProgressLoader
           ref="progressRef"
           :duration="5000"
-          :auto-start="false"
+          :auto-start="true"
           @progress="handleProgress"
           @stage-change="handleStageChange"
           @complete="handleProcessComplete"
@@ -125,6 +125,9 @@ const aiEmotionResult = ref('')
 const showAIResult = ref(false)
 const currentProgress = ref(0)
 
+// 测试模式开关 - 可以通过环境变量或配置控制
+const isTestMode = ref(import.meta.env.DEV || !import.meta.env.VITE_API_URL)
+
 // 计算属性
 const isInputActive = computed(() => store.isInputActive)
 const isProcessing = computed(() => store.isProcessing)
@@ -133,17 +136,15 @@ const showProgress = computed(() => isProcessing.value)
 onMounted(() => {
   // 初始化状态
   store.resetState()
+  console.log('HomeView mounted, test mode:', isTestMode.value)
 })
 
 // 监听处理状态变化
 watch(isProcessing, (newValue) => {
-  if (newValue && progressRef.value) {
-    // 开始进度条动画
-    nextTick(() => {
-      progressRef.value.startProgress()
-    })
+  if (newValue) {
     // 重置AI结果显示状态
     showAIResult.value = false
+    console.log('Processing started, progress loader will auto-start')
   }
 })
 
@@ -212,6 +213,12 @@ const handleProcessComplete = () => {
     showAIResult.value = true
     // 根据AI返回的情绪更新表情
     updateEmojiByAIResult(aiEmotionResult.value)
+  } else if (isTestMode.value) {
+    // 测试模式：如果AI结果还没返回，使用默认值
+    console.log('Test mode: using default emotion result')
+    aiEmotionResult.value = '快乐'
+    showAIResult.value = true
+    updateEmojiByAIResult('快乐')
   }
   
   // 发射完成事件
@@ -222,28 +229,36 @@ const handleProcessComplete = () => {
   })
 }
 
-// AI情绪分析处理函数（后台进行，不影响进度条）
+// AI情绪分析处理函数
 const processEmotionWithAI = async (emotionText) => {
   try {
-    // TODO: 实际的后端调用逻辑
-    // const response = await fetch('/api/analyze-emotion', {
-    //   method: 'POST',
-    //   headers: {
-    //     'Content-Type': 'application/json',
-    //   },
-    //   body: JSON.stringify({ text: emotionText })
-    // })
-    // const data = await response.json()
-    // aiEmotionResult.value = data.emotion
-    
-    // 测试逻辑：模拟AI分析结果
-    const mockAIResult = await mockAIAnalysis(emotionText)
-    aiEmotionResult.value = mockAIResult.emotion
+    if (isTestMode.value) {
+      // 测试模式：使用模拟的AI分析
+      console.log('Running in test mode - using mock AI analysis')
+      const mockAIResult = await mockAIAnalysis(emotionText)
+      aiEmotionResult.value = mockAIResult.emotion
+    } else {
+      // 生产模式：实际的后端调用逻辑
+      const response = await fetch('/api/analyze-emotion', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ text: emotionText })
+      })
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      
+      const data = await response.json()
+      aiEmotionResult.value = data.emotion
+    }
     
   } catch (error) {
     console.error('AI情绪分析失败:', error)
     // 错误处理：使用默认情绪
-    aiEmotionResult.value = '中性'
+    aiEmotionResult.value = isTestMode.value ? '快乐' : '中性'
   }
 }
 
