@@ -1,5 +1,8 @@
 <template>
   <div class="results-view">
+    <!-- 动态背景 -->
+    <DynamicBackground variant="results" />
+    
     <!-- 推荐结果网格 -->
     <div class="results-grid">
       <TransitionGroup name="card" appear>
@@ -76,6 +79,7 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useAnimationStore } from '@/stores/animations'
 import { useAudioPlayer } from '@/composables/useAudioPlayer'
 import MusicCard from '@/components/core/MusicCard.vue'
+import DynamicBackground from '@/components/core/DynamicBackground.vue'
 
 const props = defineProps({
   tracks: {
@@ -292,11 +296,16 @@ defineExpose({
   flex-direction: column;
   width: 100%;
   height: 100%;
-  padding: 2rem;
+  padding: 2rem 5rem; // 左右5rem padding控制宽度
   position: relative;
+  overflow: hidden; // 确保背景不溢出
   
   @media (max-width: 767px) {
     padding: 1rem;
+  }
+  
+  @media (min-width: 768px) and (max-width: 1023px) {
+    padding: 1.5rem 3rem;
   }
 }
 
@@ -306,9 +315,11 @@ defineExpose({
   gap: 1.5rem;
   align-content: start;
   overflow-y: auto;
-  padding-left: 5rem;
-  padding-right: 5rem;
+  // padding-left: 5rem;
+  // padding-right: 5rem;
   padding-bottom: 2rem;
+  position: relative; // 确保在背景之上
+  z-index: 2;
   
   // 桌面端：2列
   @media (min-width: 1024px) {
@@ -348,6 +359,8 @@ defineExpose({
   gap: 1rem;
   padding: 1rem 0;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
+  position: relative; // 确保在背景之上
+  z-index: 2;
   
   @media (max-width: 767px) {
     flex-direction: column;

@@ -5,13 +5,18 @@
       class="music-card"
       :class="{ 
         'expanded': isExpanded,
-        'hover': isHovering,
-        'playing': isPlaying
+        'hover': isHovering && !isExpanded && !isExpanding && !isCollapsing,
+        'playing': isPlaying,
+        'expanding': isExpanding,
+        'collapsing': isCollapsing,
+        'left-column': isLeftColumn,
+        'right-column': isRightColumn
       }"
       @mouseenter="handleMouseEnter"
       @mouseleave="handleMouseLeave"
       @click="handleCardClick"
       ref="cardRef"
+      :style="cardStyles"
     >
       <!-- 卡片内容 -->
       <div class="card-content">
@@ -23,7 +28,7 @@
             @load="handleImageLoad"
             @error="handleImageError"
           />
-          <div class="play-overlay" v-if="isHovering">
+          <div class="play-overlay" v-if="isHovering && !isExpanded && !isExpanding">
             <button class="play-button" @click.stop="togglePlay">
               <svg v-if="!isPlaying" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M8 5v14l11-7z"/>
@@ -66,7 +71,7 @@
       </div>
       
       <!-- 进度条（悬停时显示） -->
-      <div class="progress-container" v-if="isHovering && isPlaying">
+      <div class="progress-container" v-if="isHovering && isPlaying && !isExpanded && !isExpanding">
         <div class="progress-bar">
           <div 
             class="progress-fill"
@@ -163,7 +168,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useAudioPlayer } from '@/composables/useAudioPlayer'
 import { useAnimationController } from '@/composables/useAnimationController'
 import { useAnimationStore } from '@/stores/animations'
@@ -204,8 +209,12 @@ const {
 const cardRef = ref(null)
 const isHovering = ref(false)
 const isExpanded = ref(false)
+const isExpanding = ref(false)
+const isCollapsing = ref(false)
 const isImageLoaded = ref(false)
 const isImageError = ref(false)
+const originalRect = ref(null)
+const cardStyles = ref({})
 
 // 计算属性
 const isPlaying = computed(() => {
@@ -217,10 +226,12 @@ const playbackProgress = computed(() => {
   return progress.value
 })
 
+// 判断是左列还是右列（基于index）
+const isLeftColumn = computed(() => props.index % 2 === 0)
+const isRightColumn = computed(() => props.index % 2 === 1)
+
 // 动画控制
 let hoverCleanup = null
-let expandAnimation = null
-let originalRect = null
 
 onMounted(() => {
   // 添加悬停动画
@@ -251,30 +262,121 @@ watch(isExpanded, (newValue) => {
   }
 })
 
+// 保存原始位置和尺寸
+const saveOriginalRect = () => {
+  if (cardRef.value) {
+    const rect = cardRef.value.getBoundingClientRect()
+    originalRect.value = {
+      top: rect.top,
+      left: rect.left,
+      width: rect.width,
+      height: rect.height
+    }
+  }
+}
+
 // 处理鼠标进入
 const handleMouseEnter = () => {
-  isHovering.value = true
+  // 只有在非展开状态下才允许悬停效果
+  if (!isExpanded.value && !isExpanding.value && !isCollapsing.value) {
+    isHovering.value = true
+  }
 }
 
 // 处理鼠标离开
 const handleMouseLeave = () => {
+  // 清除悬停状态，但不影响展开的卡片
   isHovering.value = false
 }
 
-// 处理卡片点击
-const handleCardClick = () => {
-  if (isExpanded.value) return
+// 处理卡片点击 - 展开动画
+const handleCardClick = async () => {
+  if (isExpanded.value || isExpanding.value) return
   
-  isExpanded.value = true
-  emit('expand', props.track)
+  // 清除悬停状态，防止干扰动画
+  isHovering.value = false
+  
+  // 保存原始位置
+  saveOriginalRect()
+  
+  isExpanding.value = true
+  
+  // 设置初始位置
+  if (originalRect.value) {
+    cardStyles.value = {
+      position: 'fixed',
+      top: `${originalRect.value.top}px`,
+      left: `${originalRect.value.left}px`,
+      width: `${originalRect.value.width}px`,
+      height: `${originalRect.value.height}px`,
+      zIndex: 1002,
+      transformOrigin: 'center center',
+      transform: 'none'
+    }
+  }
+  
+  await nextTick()
+  
+  // 计算目标位置 - 直接使用绝对像素位置
+  const viewportWidth = window.innerWidth
+  const viewportHeight = window.innerHeight
+  const targetWidth = Math.min(viewportWidth * 0.8, 800)
+  const targetHeight = Math.min(viewportHeight * 0.85, 680)
+  const centerX = viewportWidth / 2
+  const centerY = viewportHeight / 2
+  
+  // 开始展开动画 - 不使用translate，直接计算绝对位置
+  requestAnimationFrame(() => {
+    cardStyles.value = {
+      ...cardStyles.value,
+      top: `${centerY - targetHeight / 2}px`,
+      left: `${centerX - targetWidth / 2}px`,
+      width: `${targetWidth}px`,
+      height: `${targetHeight}px`,
+      transform: 'none',
+      transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
+    }
+  })
+  
+  // 等待动画完成
+  setTimeout(() => {
+    isExpanding.value = false
+    isExpanded.value = true
+    emit('expand', props.track)
+  }, 400)
 }
 
-// 处理关闭
-const handleClose = () => {
-  if (!isExpanded.value) return
+// 处理关闭 - 收缩动画
+const handleClose = async () => {
+  if (!isExpanded.value || isCollapsing.value) return
   
+  // 确保悬停状态被清除
+  isHovering.value = false
+  
+  isCollapsing.value = true
   isExpanded.value = false
-  emit('collapse', props.track)
+  
+  // 开始收缩动画 - 回到原始位置
+  if (originalRect.value) {
+    cardStyles.value = {
+      ...cardStyles.value,
+      top: `${originalRect.value.top}px`,
+      left: `${originalRect.value.left}px`,
+      width: `${originalRect.value.width}px`,
+      height: `${originalRect.value.height}px`,
+      transform: 'none',
+      transformOrigin: 'center center',
+      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+    }
+  }
+  
+  // 等待动画完成
+  setTimeout(() => {
+    isCollapsing.value = false
+    cardStyles.value = {}
+    originalRect.value = null
+    emit('collapse', props.track)
+  }, 300)
 }
 
 // 切换播放状态
@@ -350,7 +452,7 @@ defineExpose({
   
   // 桌面端尺寸
   @media (min-width: 1024px) {
-    width: 42vw;
+    width: 40vw;
     height: 14vh;
     min-height: 140px;
     max-width: 720px;
@@ -372,22 +474,60 @@ defineExpose({
     max-width: 450px;
   }
   
-  &.hover {
+  // 只有在正常状态且悬停时才应用悬停效果
+  &.hover:not(.expanded):not(.expanding):not(.collapsing) {
     transform: translateY(-5px);
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
     backdrop-filter: blur(15px);
   }
   
+  // 展开状态的样式由JS动态控制，这里只保留基础样式
   &.expanded {
-    position: fixed !important;
-    top: 50% !important;
-    left: 50% !important;
-    transform: translate(-50%, -50%) !important;
-    width: 80vw !important;
-    height: 80vh !important;
-    z-index: 1002 !important;
-    max-width: 800px;
-    max-height: 600px;
+    // 确保展开状态下不受其他CSS影响
+    transform: none !important;
+    
+    .card-content {
+      display: none;
+    }
+    
+    .expanded-content {
+      display: flex;
+    }
+  }
+  
+  // 展开中状态
+  &.expanding {
+    // 确保展开过程中不受悬停影响
+    transform: none !important;
+    
+    .card-content {
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+  }
+  
+  // 收缩中状态
+  &.collapsing {
+    // 确保收缩过程中不受悬停影响
+    transform: none !important;
+    
+    .expanded-content {
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+    
+    .card-content {
+      display: flex;
+      opacity: 1;
+      transition: opacity 0.2s ease 0.1s;
+    }
+  }
+  
+  // 左列和右列统一使用中心点作为transform-origin
+  &.left-column, &.right-column {
+    &.expanding, &.collapsing {
+      transform-origin: center center !important;
+    }
   }
   
   &.playing {
@@ -399,10 +539,6 @@ defineExpose({
 .card-content {
   display: flex;
   height: 100%;
-  
-  .music-card.expanded & {
-    display: none;
-  }
 }
 
 .album-cover {
@@ -428,7 +564,8 @@ defineExpose({
     transition: transform 0.3s ease;
   }
   
-  .music-card.hover & img {
+  // 只有在正常悬停状态下才缩放图片
+  .music-card.hover:not(.expanded):not(.expanding):not(.collapsing) & img {
     transform: scale(1.05);
   }
 }
@@ -444,10 +581,12 @@ defineExpose({
   align-items: center;
   justify-content: center;
   opacity: 0;
-  transition: opacity 0.3s ease;
+  transition: all 0.3s ease;
   
-  .music-card.hover & {
+  // 只有在正常悬停状态下才显示播放覆盖层并同步缩放
+  .music-card.hover:not(.expanded):not(.expanding):not(.collapsing) & {
     opacity: 1;
+    transform: scale(1.05);
   }
 }
 
@@ -626,15 +765,27 @@ defineExpose({
 }
 
 .expanded-cover {
-  width: 50%;
-  max-width: 300px;
+  width: 300px;
+  height: 300px;
   margin: 0 auto 2rem auto;
   border-radius: 15px;
   overflow: hidden;
+  flex-shrink: 0;
+  
+  @media (max-width: 767px) {
+    width: 250px;
+    height: 250px;
+  }
+  
+  @media (min-width: 768px) and (max-width: 1023px) {
+    width: 280px;
+    height: 280px;
+  }
   
   img {
     width: 100%;
-    height: auto;
+    height: 100%;
+    object-fit: cover;
     display: block;
   }
 }
