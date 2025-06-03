@@ -3,6 +3,20 @@
     <!-- 动态背景 -->
     <DynamicBackground variant="results" />
     
+    <!-- AI情绪分析结果展示区域 -->
+    <div class="emotion-analysis-header" v-if="props.aiEmotionResult || (isTestMode && testData.userInput)">
+      <div class="analysis-card">
+        <div class="user-input-section">
+          <span class="label">你的情绪描述：</span>
+          <span class="user-text">"{{ props.userInput || (isTestMode ? testData.userInput : '') }}"</span>
+        </div>
+        <div class="ai-result-section">
+          <span class="label">AI识别情绪：</span>
+          <span class="ai-emotion">{{ props.aiEmotionResult || (isTestMode ? testData.aiResult : '') }}</span>
+        </div>
+      </div>
+    </div>
+    
     <!-- 推荐结果网格 -->
     <div class="results-grid">
       <TransitionGroup name="card" appear>
@@ -21,17 +35,13 @@
     
     <!-- 底部控制区域 -->
     <div class="bottom-controls">
-      <!-- 情绪分析摘要 -->
-      <div class="emotion-summary" v-if="emotionAnalysis">
-        {{ emotionAnalysis }}
-      </div>
-      
       <!-- 刷新按钮 -->
       <button 
         class="refresh-button btn-circular"
         @click="handleRefresh"
         :disabled="isRefreshing"
         :class="{ 'refreshing': isRefreshing }"
+        title="重新推荐"
       >
         <svg class="refresh-icon" viewBox="0 0 24 24" fill="currentColor">
           <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
@@ -42,6 +52,7 @@
       <button 
         class="back-button btn-circular"
         @click="handleBack"
+        title="返回重新输入"
       >
         <svg class="back-icon" viewBox="0 0 24 24" fill="currentColor">
           <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
@@ -97,6 +108,14 @@ const props = defineProps({
   errorMessage: {
     type: String,
     default: '网络连接错误，请稍后重试'
+  },
+  aiEmotionResult: {
+    type: String,
+    default: ''
+  },
+  userInput: {
+    type: String,
+    default: ''
   }
 })
 
@@ -105,17 +124,30 @@ const emit = defineEmits(['refresh', 'back', 'card-expand', 'card-collapse', 'ca
 const store = useAnimationStore()
 const { stopAll } = useAudioPlayer()
 
+// 测试模式开关 - 跟HomeView一样的逻辑
+const isTestMode = ref(import.meta.env.DEV || !import.meta.env.VITE_API_URL)
+
+// 测试数据 - 只在测试模式下使用
+const testData = ref({
+  userInput: '今天心情很好，阳光明媚，想听一些轻松愉快的音乐！',
+  aiResult: '快乐'
+})
+
 // 响应式数据
 const isRefreshing = ref(false)
 const expandedCard = ref(null)
 
 // 计算属性
-const emotionAnalysis = computed(() => store.emotionAnalysis)
 const hasRecommendations = computed(() => props.tracks.length > 0)
 
 onMounted(() => {
   // 设置当前视图
   store.setCurrentView('results')
+  
+  // 测试模式日志
+  if (isTestMode.value) {
+    console.log('ResultsView: Running in test mode, showing test AI analysis data')
+  }
   
   // 预加载音频
   if (hasRecommendations.value) {
@@ -309,14 +341,79 @@ defineExpose({
   }
 }
 
+// AI情绪分析结果展示区域
+.emotion-analysis-header {
+  margin-bottom: 2rem;
+  position: relative;
+  z-index: 2;
+}
+
+.analysis-card {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(15px);
+  padding: 1.5rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  
+  @media (max-width: 767px) {
+    padding: 1rem 1.5rem;
+    gap: 0.75rem;
+  }
+}
+
+.user-input-section,
+.ai-result-section {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  
+  @media (max-width: 767px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+}
+
+.label {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 500;
+  flex-shrink: 0;
+  
+  @media (max-width: 767px) {
+    font-size: 0.8rem;
+  }
+}
+
+.user-text {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.9);
+  font-style: italic;
+  
+  @media (max-width: 767px) {
+    font-size: 0.9rem;
+  }
+}
+
+.ai-emotion {
+  font-size: 1.1rem;
+  color: #FFD166;
+  font-weight: 600;
+  
+  @media (max-width: 767px) {
+    font-size: 1rem;
+  }
+}
+
 .results-grid {
   flex: 1;
   display: grid;
   gap: 1.5rem;
   align-content: start;
   overflow-y: auto;
-  // padding-left: 5rem;
-  // padding-right: 5rem;
   padding-bottom: 2rem;
   position: relative; // 确保在背景之上
   z-index: 2;
@@ -363,25 +460,7 @@ defineExpose({
   z-index: 2;
   
   @media (max-width: 767px) {
-    flex-direction: column;
-    gap: 1rem;
-  }
-}
-
-.emotion-summary {
-  flex: 1;
-  text-align: center;
-  padding: 0.75rem 1.5rem;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 0.9rem;
-  backdrop-filter: blur(10px);
-  
-  @media (max-width: 767px) {
-    font-size: 0.8rem;
-    padding: 0.5rem 1rem;
+    gap: 1.5rem;
   }
 }
 
@@ -564,6 +643,10 @@ defineExpose({
     padding: 1rem;
   }
   
+  .emotion-analysis-header {
+    margin-bottom: 1.5rem;
+  }
+  
   .results-grid {
     gap: 1rem;
     
@@ -581,6 +664,14 @@ defineExpose({
 @media (max-height: 600px) {
   .results-view {
     padding: 0.5rem;
+  }
+  
+  .emotion-analysis-header {
+    margin-bottom: 1rem;
+  }
+  
+  .analysis-card {
+    padding: 1rem 1.5rem;
   }
   
   .results-grid {
@@ -609,10 +700,13 @@ defineExpose({
 
 // 高对比度模式
 @media (prefers-contrast: high) {
-  .emotion-summary {
+  .analysis-card {
     background: rgba(255, 255, 255, 0.2);
     border: 2px solid rgba(255, 255, 255, 0.5);
-    color: white;
+  }
+  
+  .ai-emotion {
+    color: #FFA726;
   }
   
   .bottom-controls {

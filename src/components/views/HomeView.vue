@@ -45,11 +45,6 @@
           @stage-change="handleStageChange"
           @complete="handleProcessComplete"
         />
-        
-        <!-- AI返回的情绪分析结果 - 只在100%完成后显示 -->
-        <div class="emotion-analysis" v-if="showAIResult && aiEmotionResult">
-          AI识别情绪：{{ aiEmotionResult }}
-        </div>
       </div>
     </Transition>
   </div>
@@ -77,7 +72,6 @@ const currentMood = ref('happy')
 const isEmojiReady = ref(false)
 const submittedEmotion = ref('')
 const aiEmotionResult = ref('')
-const showAIResult = ref(false)
 const currentProgress = ref(0)
 
 // 测试模式开关 - 可以通过环境变量或配置控制
@@ -97,8 +91,6 @@ onMounted(() => {
 // 监听处理状态变化
 watch(isProcessing, (newValue) => {
   if (newValue) {
-    // 重置AI结果显示状态
-    showAIResult.value = false
     console.log('Processing started, progress loader will auto-start')
   }
 })
@@ -163,17 +155,15 @@ const handleStageChange = (stage, text) => {
 const handleProcessComplete = () => {
   console.log('Processing complete')
   
-  // 只有在进度条完成后才显示AI结果
-  if (aiEmotionResult.value) {
-    showAIResult.value = true
-    // 根据AI返回的情绪更新表情
-    updateEmojiByAIResult(aiEmotionResult.value)
-  } else if (isTestMode.value) {
-    // 测试模式：如果AI结果还没返回，使用默认值
+  // 如果AI结果还没返回，等待一下或使用默认值
+  if (!aiEmotionResult.value && isTestMode.value) {
     console.log('Test mode: using default emotion result')
     aiEmotionResult.value = '快乐'
-    showAIResult.value = true
-    updateEmojiByAIResult('快乐')
+  }
+  
+  // 根据AI返回的情绪更新表情
+  if (aiEmotionResult.value) {
+    updateEmojiByAIResult(aiEmotionResult.value)
   }
   
   // 发射完成事件
@@ -275,7 +265,6 @@ const updateEmojiByAIResult = (emotion) => {
 const resetView = () => {
   submittedEmotion.value = ''
   aiEmotionResult.value = ''
-  showAIResult.value = false
   currentProgress.value = 0
   currentMood.value = 'happy'
   
@@ -404,37 +393,6 @@ defineExpose({
   }
 }
 
-.emotion-analysis {
-  text-align: center;
-  margin-top: 2rem;
-  padding: 1rem 2rem;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 1rem;
-  backdrop-filter: blur(10px);
-  // 添加渐入动画
-  animation: fadeInUp 0.5s ease-out;
-  
-  @media (max-width: 767px) {
-    font-size: 0.9rem;
-    padding: 0.75rem 1.5rem;
-    margin-top: 1.5rem;
-  }
-}
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 // 过渡动画
 .fade-enter-active,
 .fade-leave-active {
@@ -512,12 +470,6 @@ defineExpose({
 
 // 高对比度模式
 @media (prefers-contrast: high) {
-  .emotion-analysis {
-    background: rgba(255, 255, 255, 0.2);
-    border: 2px solid rgba(255, 255, 255, 0.5);
-    color: white;
-  }
-  
   .emoji-container {
     border: 3px solid rgba(255, 255, 255, 0.5);
   }

@@ -22,6 +22,8 @@
           :is-loading="isLoadingTracks"
           :has-error="hasError"
           :error-message="errorMessage"
+          :ai-emotion-result="aiEmotionResult"
+          :user-input="userInputText"
           @refresh="handleRefresh"
           @back="handleBack"
           @card-expand="handleCardExpand"
@@ -81,6 +83,8 @@ const errorMessage = ref('')
 const showErrorToast = ref(false)
 const toastMessage = ref('')
 const currentEmotion = ref(null)
+const aiEmotionResult = ref('')
+const userInputText = ref('')
 
 // 计算属性
 const transitionName = computed(() => {
@@ -136,6 +140,7 @@ const initializeApp = async () => {
 const handleEmotionSubmitted = async (emotionData) => {
   console.log('Emotion submitted:', emotionData)
   currentEmotion.value = emotionData
+  userInputText.value = emotionData.text || ''
   
   // 提交后立即开始生成音乐推荐数据
   try {
@@ -155,6 +160,10 @@ const handleEmotionSubmitted = async (emotionData) => {
 const handleProcessingComplete = (data) => {
   console.log('Processing complete:', data)
   
+  // 设置AI分析结果
+  aiEmotionResult.value = data.aiResult || '快乐'
+  userInputText.value = data.emotion || userInputText.value
+  
   // 确保有音乐数据再切换视图
   if (musicTracks.value.length === 0) {
     console.log('No tracks available, generating mock data...')
@@ -172,6 +181,7 @@ const handleProcessingComplete = (data) => {
   store.setCurrentView('results')
   
   console.log('Switched to results view with tracks:', musicTracks.value.length)
+  console.log('AI result:', aiEmotionResult.value, 'User input:', userInputText.value)
 }
 
 // 获取音乐推荐
@@ -300,6 +310,8 @@ const handleBack = () => {
   // 重置数据
   musicTracks.value = []
   currentEmotion.value = null
+  aiEmotionResult.value = ''
+  userInputText.value = ''
   hasError.value = false
   isLoadingTracks.value = false
   
