@@ -20,7 +20,7 @@
         :style="!isAnalysisExpanded ? {} : {}"
       >
         <!-- 默认卡片内容 -->
-        <div class="analysis-content" v-if="!isAnalysisExpanded">
+        <div class="analysis-content" v-if="!isAnalysisExpanded && !isAnalysisExpanding">
           <div class="user-input-section">
             <span class="label">你的情绪描述：</span>
             <span class="user-text">"{{ displayUserInput }}"</span>
@@ -111,15 +111,16 @@
       <!-- 背景遮罩 -->
       <div 
         class="analysis-backdrop" 
-        v-if="isAnalysisExpanded"
+        v-if="isAnalysisExpanded || isAnalysisCollapsing"
         @click="handleAnalysisClose"
       ></div>
       
       <!-- 展开的AI分析卡片 -->
       <div 
         class="expanded-analysis-modal"
-        v-if="isAnalysisExpanded || isAnalysisExpanding"
+        v-if="isAnalysisExpanded || isAnalysisExpanding || isAnalysisCollapsing"
         :style="analysisCardStyles"
+        :class="{ 'collapsing': isAnalysisCollapsing }"
       >
         <!-- 展开视图内容 -->
         <div class="expanded-analysis-content">
@@ -150,25 +151,6 @@
                   <h4 class="explanation-title">AI 的话</h4>
                   <p class="explanation-text">{{ extendedAiAnalysis }}</p>
                 </div>
-                
-                <!-- 情绪详细分析 -->
-                <div class="emotion-details">
-                  <h4 class="details-title">情绪分析详情</h4>
-                  <div class="emotion-breakdown">
-                    <div class="emotion-item">
-                      <span class="breakdown-label">主要情绪：</span>
-                      <span class="breakdown-value">{{ displayAiResult }}</span>
-                    </div>
-                    <div class="emotion-item">
-                      <span class="breakdown-label">情绪强度：</span>
-                      <span class="breakdown-value">{{ emotionIntensity }}%</span>
-                    </div>
-                    <div class="emotion-item">
-                      <span class="breakdown-label">置信度：</span>
-                      <span class="breakdown-value">{{ emotionConfidence }}%</span>
-                    </div>
-                  </div>
-                </div>
               </div>
             </div>
           </div>
@@ -177,6 +159,7 @@
         <!-- 关闭按钮 -->
         <button 
           class="close-button" 
+          v-if="!isAnalysisCollapsing"
           @click.stop="handleAnalysisClose"
         >
           <svg viewBox="0 0 24 24" fill="currentColor">
@@ -267,16 +250,6 @@ const extendedAiAnalysis = computed(() => {
   }
   // 实际应用中这里可以从props或API获取
   return '基于你的情绪描述，我为你推荐了符合当前心境的音乐。希望这些歌曲能够陪伴你度过美好的时光。'
-})
-
-const emotionIntensity = computed(() => {
-  // 实际应用中可以从API获取
-  return isTestMode.value ? 85 : 75
-})
-
-const emotionConfidence = computed(() => {
-  // 实际应用中可以从API获取
-  return isTestMode.value ? 92 : 80
 })
 
 onMounted(() => {
@@ -424,7 +397,7 @@ const handleAnalysisClose = async () => {
     }
   }
   
-  // 等待动画完成
+  // 等待动画完成后隐藏
   setTimeout(() => {
     isAnalysisCollapsing.value = false
     analysisCardStyles.value = {}
@@ -651,6 +624,7 @@ defineExpose({
   &.collapsing {
     opacity: 1;
     pointer-events: none;
+    transition: opacity 0.3s ease 0.1s;
   }
 }
 
@@ -770,6 +744,14 @@ defineExpose({
   border: 1px solid rgba(255, 255, 255, 0.2);
   backdrop-filter: blur(15px);
   z-index: 9999;
+  
+  // 收缩动画状态
+  &.collapsing {
+    .expanded-analysis-content {
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+  }
 }
 
 // 展开视图内容
@@ -892,7 +874,7 @@ defineExpose({
 
 // AI说话内容
 .ai-explanation {
-  margin-bottom: 1.5rem;
+  margin-bottom: 0;
 }
 
 .explanation-title {
@@ -911,42 +893,6 @@ defineExpose({
   @media (max-width: 767px) {
     font-size: 0.9rem;
   }
-}
-
-// 情绪详细分析
-
-.details-title {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: white;
-  margin: 0 0 1rem 0;
-}
-
-.emotion-breakdown {
-  display: grid;
-  gap: 0.75rem;
-}
-
-.emotion-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.75rem;
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.breakdown-label {
-  font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.7);
-  font-weight: 500;
-}
-
-.breakdown-value {
-  font-size: 0.95rem;
-  color: white;
-  font-weight: 600;
 }
 
 // 关闭按钮
