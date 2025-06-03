@@ -4,15 +4,38 @@
     <DynamicBackground variant="results" />
     
     <!-- AI情绪分析结果展示区域 -->
-    <div class="emotion-analysis-header" v-if="props.aiEmotionResult || (isTestMode && testData.userInput)">
-      <div class="analysis-card">
-        <div class="user-input-section">
-          <span class="label">你的情绪描述：</span>
-          <span class="user-text">"{{ props.userInput || (isTestMode ? testData.userInput : '') }}"</span>
-        </div>
-        <div class="ai-result-section">
-          <span class="label">AI识别情绪：</span>
-          <span class="ai-emotion">{{ props.aiEmotionResult || (isTestMode ? testData.aiResult : '') }}</span>
+    <div class="emotion-analysis-wrapper" v-if="props.aiEmotionResult || (isTestMode && testData.userInput)">
+      <div 
+        class="emotion-analysis-card"
+        :class="{ 
+          'expanded': isAnalysisExpanded,
+          'hover': isAnalysisHovering && !isAnalysisExpanded && !isAnalysisExpanding && !isAnalysisCollapsing,
+          'expanding': isAnalysisExpanding,
+          'collapsing': isAnalysisCollapsing
+        }"
+        @mouseenter="handleAnalysisMouseEnter"
+        @mouseleave="handleAnalysisMouseLeave"
+        @click="handleAnalysisCardClick"
+        ref="analysisCardRef"
+        :style="!isAnalysisExpanded ? {} : {}"
+      >
+        <!-- 默认卡片内容 -->
+        <div class="analysis-content" v-if="!isAnalysisExpanded">
+          <div class="user-input-section">
+            <span class="label">你的情绪描述：</span>
+            <span class="user-text">"{{ displayUserInput }}"</span>
+          </div>
+          <div class="ai-result-section">
+            <span class="label">AI识别情绪：</span>
+            <span class="ai-emotion">{{ displayAiResult }}</span>
+          </div>
+          
+          <!-- 展开按钮 -->
+          <div class="expand-button" v-if="!isAnalysisExpanded && !isAnalysisExpanding">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 8l-6 6 1.41 1.41L12 10.83l4.59 4.58L18 14z"/>
+            </svg>
+          </div>
         </div>
       </div>
     </div>
@@ -82,11 +105,91 @@
         重试
       </button>
     </div>
+    
+    <!-- 使用 Teleport 将展开的 AI 分析卡片渲染到 body 下，确保最高层级 -->
+    <Teleport to="body">
+      <!-- 背景遮罩 -->
+      <div 
+        class="analysis-backdrop" 
+        v-if="isAnalysisExpanded"
+        @click="handleAnalysisClose"
+      ></div>
+      
+      <!-- 展开的AI分析卡片 -->
+      <div 
+        class="expanded-analysis-modal"
+        v-if="isAnalysisExpanded || isAnalysisExpanding"
+        :style="analysisCardStyles"
+      >
+        <!-- 展开视图内容 -->
+        <div class="expanded-analysis-content">
+          <div class="expanded-header">
+            <h2 class="expanded-title">AI 情绪分析结果</h2>
+          </div>
+          
+          <div class="expanded-body">
+            <!-- 用户输入完整显示 -->
+            <div class="full-user-input">
+              <h3 class="section-title">你的情绪描述</h3>
+              <div class="input-content">
+                <p>"{{ displayUserInput }}"</p>
+              </div>
+            </div>
+            
+            <!-- AI分析结果 -->
+            <div class="full-ai-analysis">
+              <h3 class="section-title">AI 分析结果</h3>
+              <div class="analysis-result">
+                <div class="emotion-result">
+                  <span class="emotion-label">识别情绪：</span>
+                  <span class="emotion-value">{{ displayAiResult }}</span>
+                </div>
+                
+                <!-- 扩展的AI分析内容 -->
+                <div class="ai-explanation" v-if="extendedAiAnalysis">
+                  <h4 class="explanation-title">AI 的话</h4>
+                  <p class="explanation-text">{{ extendedAiAnalysis }}</p>
+                </div>
+                
+                <!-- 情绪详细分析 -->
+                <div class="emotion-details">
+                  <h4 class="details-title">情绪分析详情</h4>
+                  <div class="emotion-breakdown">
+                    <div class="emotion-item">
+                      <span class="breakdown-label">主要情绪：</span>
+                      <span class="breakdown-value">{{ displayAiResult }}</span>
+                    </div>
+                    <div class="emotion-item">
+                      <span class="breakdown-label">情绪强度：</span>
+                      <span class="breakdown-value">{{ emotionIntensity }}%</span>
+                    </div>
+                    <div class="emotion-item">
+                      <span class="breakdown-label">置信度：</span>
+                      <span class="breakdown-value">{{ emotionConfidence }}%</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 关闭按钮 -->
+        <button 
+          class="close-button" 
+          @click.stop="handleAnalysisClose"
+        >
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+          </svg>
+        </button>
+      </div>
+    </Teleport>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useAnimationStore } from '@/stores/animations'
 import { useAudioPlayer } from '@/composables/useAudioPlayer'
 import MusicCard from '@/components/core/MusicCard.vue'
@@ -129,7 +232,7 @@ const isTestMode = ref(import.meta.env.DEV || !import.meta.env.VITE_API_URL)
 
 // 测试数据 - 只在测试模式下使用
 const testData = ref({
-  userInput: '今天心情很好，阳光明媚，想听一些轻松愉快的音乐！',
+  userInput: '今天心情很好，阳光明媚，想听一些轻松愉快的音乐！我希望能找到一些让人感到温暖和充满活力的歌曲，最好是那种能让人想要起舞或者微笑的旋律。',
   aiResult: '快乐'
 })
 
@@ -137,8 +240,44 @@ const testData = ref({
 const isRefreshing = ref(false)
 const expandedCard = ref(null)
 
+// AI分析卡片相关状态
+const analysisCardRef = ref(null)
+const isAnalysisHovering = ref(false)
+const isAnalysisExpanded = ref(false)
+const isAnalysisExpanding = ref(false)
+const isAnalysisCollapsing = ref(false)
+const originalAnalysisRect = ref(null)
+const analysisCardStyles = ref({})
+
 // 计算属性
 const hasRecommendations = computed(() => props.tracks.length > 0)
+
+const displayUserInput = computed(() => {
+  return props.userInput || (isTestMode.value ? testData.value.userInput : '')
+})
+
+const displayAiResult = computed(() => {
+  return props.aiEmotionResult || (isTestMode.value ? testData.value.aiResult : '')
+})
+
+// 扩展的AI分析内容（可以根据实际后端返回的数据进行调整）
+const extendedAiAnalysis = computed(() => {
+  if (isTestMode.value) {
+    return '从你的描述中，我感受到了满满的正能量！你对阳光和音乐的渴望表现出典型的快乐情绪特征。建议你选择一些节奏轻快、旋律明亮的歌曲来延续这种美好的心情。'
+  }
+  // 实际应用中这里可以从props或API获取
+  return '基于你的情绪描述，我为你推荐了符合当前心境的音乐。希望这些歌曲能够陪伴你度过美好的时光。'
+})
+
+const emotionIntensity = computed(() => {
+  // 实际应用中可以从API获取
+  return isTestMode.value ? 85 : 75
+})
+
+const emotionConfidence = computed(() => {
+  // 实际应用中可以从API获取
+  return isTestMode.value ? 92 : 80
+})
 
 onMounted(() => {
   // 设置当前视图
@@ -151,7 +290,6 @@ onMounted(() => {
   
   // 预加载音频
   if (hasRecommendations.value) {
-    // 这里可以预加载前几首歌的音频
     console.log('Preloading audio for tracks:', props.tracks.slice(0, 3))
   }
 })
@@ -159,6 +297,9 @@ onMounted(() => {
 onUnmounted(() => {
   // 停止所有音频播放
   stopAll()
+  
+  // 恢复页面滚动
+  document.body.style.overflow = ''
 })
 
 // 监听tracks变化
@@ -167,6 +308,131 @@ watch(() => props.tracks, (newTracks) => {
     console.log('Tracks updated:', newTracks.length, 'tracks')
   }
 }, { immediate: true })
+
+// 监听分析卡片展开状态
+watch(isAnalysisExpanded, (newValue) => {
+  // 控制页面滚动
+  if (newValue) {
+    document.body.style.overflow = 'hidden'
+  } else {
+    document.body.style.overflow = ''
+  }
+})
+
+// AI分析卡片相关方法
+
+// 保存分析卡片原始位置和尺寸
+const saveOriginalAnalysisRect = () => {
+  if (analysisCardRef.value) {
+    const rect = analysisCardRef.value.getBoundingClientRect()
+    originalAnalysisRect.value = {
+      top: rect.top,
+      left: rect.left,
+      width: rect.width,
+      height: rect.height
+    }
+  }
+}
+
+// 处理分析卡片鼠标进入
+const handleAnalysisMouseEnter = () => {
+  if (!isAnalysisExpanded.value && !isAnalysisExpanding.value && !isAnalysisCollapsing.value) {
+    isAnalysisHovering.value = true
+  }
+}
+
+// 处理分析卡片鼠标离开
+const handleAnalysisMouseLeave = () => {
+  isAnalysisHovering.value = false
+}
+
+// 处理分析卡片点击 - 展开动画
+const handleAnalysisCardClick = async () => {
+  if (isAnalysisExpanded.value || isAnalysisExpanding.value) return
+  
+  // 清除悬停状态
+  isAnalysisHovering.value = false
+  
+  // 保存原始位置
+  saveOriginalAnalysisRect()
+  
+  isAnalysisExpanding.value = true
+  
+  // 设置初始位置
+  if (originalAnalysisRect.value) {
+    analysisCardStyles.value = {
+      position: 'fixed',
+      top: `${originalAnalysisRect.value.top}px`,
+      left: `${originalAnalysisRect.value.left}px`,
+      width: `${originalAnalysisRect.value.width}px`,
+      height: `${originalAnalysisRect.value.height}px`,
+      zIndex: 1010,
+      transformOrigin: 'center center',
+      transform: 'none'
+    }
+  }
+  
+  await nextTick()
+  
+  // 计算目标位置
+  const viewportWidth = window.innerWidth
+  const viewportHeight = window.innerHeight
+  const targetWidth = Math.min(viewportWidth * 0.85, 900)
+  const targetHeight = Math.min(viewportHeight * 0.8, 700)
+  const centerX = viewportWidth / 2
+  const centerY = viewportHeight / 2
+  
+  // 开始展开动画
+  requestAnimationFrame(() => {
+    analysisCardStyles.value = {
+      ...analysisCardStyles.value,
+      top: `${centerY - targetHeight / 2}px`,
+      left: `${centerX - targetWidth / 2}px`,
+      width: `${targetWidth}px`,
+      height: `${targetHeight}px`,
+      transform: 'none',
+      transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
+    }
+  })
+  
+  // 等待动画完成
+  setTimeout(() => {
+    isAnalysisExpanding.value = false
+    isAnalysisExpanded.value = true
+  }, 400)
+}
+
+// 处理分析卡片关闭 - 收缩动画
+const handleAnalysisClose = async () => {
+  if (!isAnalysisExpanded.value || isAnalysisCollapsing.value) return
+  
+  isAnalysisHovering.value = false
+  isAnalysisCollapsing.value = true
+  isAnalysisExpanded.value = false
+  
+  // 开始收缩动画
+  if (originalAnalysisRect.value) {
+    analysisCardStyles.value = {
+      ...analysisCardStyles.value,
+      top: `${originalAnalysisRect.value.top}px`,
+      left: `${originalAnalysisRect.value.left}px`,
+      width: `${originalAnalysisRect.value.width}px`,
+      height: `${originalAnalysisRect.value.height}px`,
+      transform: 'none',
+      transformOrigin: 'center center',
+      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+    }
+  }
+  
+  // 等待动画完成
+  setTimeout(() => {
+    isAnalysisCollapsing.value = false
+    analysisCardStyles.value = {}
+    originalAnalysisRect.value = null
+  }, 300)
+}
+
+// 其他方法保持不变
 
 // 处理卡片展开
 const handleCardExpand = (track) => {
@@ -328,9 +594,9 @@ defineExpose({
   flex-direction: column;
   width: 100%;
   height: 100%;
-  padding: 2rem 5rem; // 左右5rem padding控制宽度
+  padding: 2rem 5rem;
   position: relative;
-  overflow: hidden; // 确保背景不溢出
+  overflow: hidden;
   
   @media (max-width: 767px) {
     padding: 1rem;
@@ -341,27 +607,57 @@ defineExpose({
   }
 }
 
-// AI情绪分析结果展示区域
-.emotion-analysis-header {
-  margin-bottom: 2rem;
+// AI情绪分析卡片容器
+.emotion-analysis-wrapper {
   position: relative;
+  margin-bottom: 2rem;
   z-index: 2;
 }
 
-.analysis-card {
+.emotion-analysis-card {
+  position: relative;
   background: rgba(255, 255, 255, 0.1);
   border-radius: 20px;
   border: 1px solid rgba(255, 255, 255, 0.2);
   backdrop-filter: blur(15px);
   padding: 1.5rem 2rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
   
   @media (max-width: 767px) {
     padding: 1rem 1.5rem;
-    gap: 0.75rem;
   }
+  
+  // 悬停效果
+  &.hover:not(.expanded):not(.expanding):not(.collapsing) {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(20px);
+  }
+  
+  // 展开状态
+  &.expanded {
+    opacity: 0;
+    pointer-events: none;
+  }
+  
+  // 展开中状态
+  &.expanding {
+    opacity: 0;
+    pointer-events: none;
+  }
+  
+  // 收缩中状态
+  &.collapsing {
+    opacity: 1;
+    pointer-events: none;
+  }
+}
+
+// 默认卡片内容
+.analysis-content {
+  display: block;
+  position: relative;
 }
 
 .user-input-section,
@@ -369,6 +665,11 @@ defineExpose({
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  margin-bottom: 1rem;
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
   
   @media (max-width: 767px) {
     flex-direction: column;
@@ -393,8 +694,20 @@ defineExpose({
   color: rgba(255, 255, 255, 0.9);
   font-style: italic;
   
+  // 文字超出隐藏
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 70%;
+  
   @media (max-width: 767px) {
     font-size: 0.9rem;
+    max-width: 100%;
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 }
 
@@ -408,6 +721,276 @@ defineExpose({
   }
 }
 
+// 展开按钮
+.expand-button {
+  position: absolute;
+  bottom: 0.75rem;
+  right: 50%;
+  transform: translateX(50%);
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 209, 102, 0.2);
+  border-radius: 50%;
+  border: 1px solid rgba(255, 209, 102, 0.4);
+  color: #FFD166;
+  transition: all 0.3s ease;
+  
+  svg {
+    width: 18px;
+    height: 18px;
+    transform: rotate(180deg);
+  }
+  
+  .emotion-analysis-card.hover & {
+    background: rgba(255, 209, 102, 0.3);
+    border-color: rgba(255, 209, 102, 0.6);
+    transform: translateX(50%) scale(1.1);
+  }
+  
+  @media (max-width: 767px) {
+    bottom: 0.5rem;
+    width: 28px;
+    height: 28px;
+    
+    svg {
+      width: 16px;
+      height: 16px;
+    }
+  }
+}
+
+// 使用 Teleport 的模态框样式
+.expanded-analysis-modal {
+  position: fixed;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(15px);
+  z-index: 9999;
+}
+
+// 展开视图内容
+.expanded-analysis-content {
+  height: 100%;
+  position: relative;
+  padding: 2rem;
+  
+  @media (max-width: 767px) {
+    padding: 1.5rem;
+  }
+}
+
+.expanded-header {
+  text-align: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.expanded-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: white;
+  margin: 0;
+  
+  @media (max-width: 767px) {
+    font-size: 1.4rem;
+  }
+}
+
+.expanded-body {
+  max-height: calc(100% - 120px);
+  overflow-y: auto;
+  padding-right: 1rem;
+  
+  // 隐藏滚动条
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+// 用户输入完整显示
+.full-user-input {
+  margin-bottom: 2rem;
+}
+
+.section-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: white;
+  margin: 0 0 1rem 0;
+  
+  @media (max-width: 767px) {
+    font-size: 1.1rem;
+  }
+}
+
+.input-content {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  
+  p {
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.9);
+    font-style: italic;
+    line-height: 1.6;
+    margin: 0;
+    
+    @media (max-width: 767px) {
+      font-size: 0.9rem;
+    }
+  }
+}
+
+// AI分析结果
+
+.analysis-result {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.emotion-result {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  
+  @media (max-width: 767px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+}
+
+.emotion-label {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 500;
+}
+
+.emotion-value {
+  font-size: 1.3rem;
+  color: #FFD166;
+  font-weight: 700;
+  
+  @media (max-width: 767px) {
+    font-size: 1.2rem;
+  }
+}
+
+// AI说话内容
+.ai-explanation {
+  margin-bottom: 1.5rem;
+}
+
+.explanation-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: white;
+  margin: 0 0 0.75rem 0;
+}
+
+.explanation-text {
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.6;
+  margin: 0;
+  
+  @media (max-width: 767px) {
+    font-size: 0.9rem;
+  }
+}
+
+// 情绪详细分析
+
+.details-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: white;
+  margin: 0 0 1rem 0;
+}
+
+.emotion-breakdown {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.emotion-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.breakdown-label {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 500;
+}
+
+.breakdown-value {
+  font-size: 0.95rem;
+  color: white;
+  font-weight: 600;
+}
+
+// 关闭按钮
+.close-button {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1012;
+  
+  svg {
+    width: 20px;
+    height: 20px;
+  }
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.1);
+  }
+}
+
+// 背景遮罩 - 确保在模态框之下，其他内容之上
+.analysis-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  z-index: 1009;
+  backdrop-filter: blur(5px);
+}
+
+// 推荐结果网格
 .results-grid {
   flex: 1;
   display: grid;
@@ -415,7 +998,7 @@ defineExpose({
   align-content: start;
   overflow-y: auto;
   padding-bottom: 2rem;
-  position: relative; // 确保在背景之上
+  position: relative;
   z-index: 2;
   
   // 桌面端：2列
@@ -449,6 +1032,7 @@ defineExpose({
   }
 }
 
+// 底部控制区域
 .bottom-controls {
   display: flex;
   align-items: center;
@@ -456,7 +1040,7 @@ defineExpose({
   gap: 1rem;
   padding: 1rem 0;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
-  position: relative; // 确保在背景之上
+  position: relative;
   z-index: 2;
   
   @media (max-width: 767px) {
@@ -643,7 +1227,7 @@ defineExpose({
     padding: 1rem;
   }
   
-  .emotion-analysis-header {
+  .emotion-analysis-wrapper {
     margin-bottom: 1.5rem;
   }
   
@@ -651,7 +1235,7 @@ defineExpose({
     gap: 1rem;
     
     @media (min-width: 1024px) {
-      column-gap: 0.2rem; // 低屏幕高度时进一步减少
+      column-gap: 0.2rem;
       row-gap: 0.8rem;
     }
   }
@@ -666,11 +1250,11 @@ defineExpose({
     padding: 0.5rem;
   }
   
-  .emotion-analysis-header {
+  .emotion-analysis-wrapper {
     margin-bottom: 1rem;
   }
   
-  .analysis-card {
+  .emotion-analysis-card {
     padding: 1rem 1.5rem;
   }
   
@@ -679,7 +1263,7 @@ defineExpose({
     padding-bottom: 1rem;
     
     @media (min-width: 1024px) {
-      column-gap: 0.1rem; // 极小屏幕时最小间距
+      column-gap: 0.1rem;
       row-gap: 0.7rem;
     }
   }
@@ -700,7 +1284,7 @@ defineExpose({
 
 // 高对比度模式
 @media (prefers-contrast: high) {
-  .analysis-card {
+  .emotion-analysis-card {
     background: rgba(255, 255, 255, 0.2);
     border: 2px solid rgba(255, 255, 255, 0.5);
   }
