@@ -20,14 +20,15 @@
         :style="!isAnalysisExpanded ? {} : {}"
       >
         <!-- 默认卡片内容 -->
-        <div class="analysis-content" v-if="!isAnalysisExpanded && !isAnalysisExpanding">
+        <div class="analysis-content" v-if="!isAnalysisExpanded && !isAnalysisExpanding && props.extendedAiAnalysis">
           <div class="user-input-section">
             <span class="label">你的情绪描述：</span>
             <span class="user-text">"{{ displayUserInput }}"</span>
           </div>
           <div class="ai-result-section">
             <span class="label">AI识别情绪：</span>
-            <span class="ai-emotion">{{ displayAiResult }}</span>
+            <span class="ai-emotion">{{ displayAiResult }}</span> |
+            <span class="ex-analysis">{{ props.extendedAiAnalysis }}</span>
           </div>
           
           <!-- 展开按钮 -->
@@ -147,9 +148,9 @@
                 </div>
                 
                 <!-- 扩展的AI分析内容 -->
-                <div class="ai-explanation" v-if="extendedAiAnalysis">
+                <div class="ai-explanation" v-if="props.extendedAiAnalysis">
                   <h4 class="explanation-title">AI 的话</h4>
-                  <p class="explanation-text">{{ extendedAiAnalysis }}</p>
+                  <p class="explanation-text">{{ props.extendedAiAnalysis }}</p>
                 </div>
               </div>
             </div>
@@ -202,6 +203,10 @@ const props = defineProps({
   userInput: {
     type: String,
     default: ''
+  },
+  extendedAiAnalysis: {
+    type: String,
+    default: ''
   }
 })
 
@@ -216,7 +221,8 @@ const isTestMode = ref(import.meta.env.DEV || !import.meta.env.VITE_API_URL)
 // 测试数据 - 只在测试模式下使用
 const testData = ref({
   userInput: '今天心情很好，阳光明媚，想听一些轻松愉快的音乐！我希望能找到一些让人感到温暖和充满活力的歌曲，最好是那种能让人想要起舞或者微笑的旋律。',
-  aiResult: '快乐'
+  aiResult: '快乐',
+  // extendedAiAnalysis: '从你的描述中，我感受到了满满的正能量！你对阳光和音乐的渴望表现出典型的快乐情绪特征。我为你选择了一些节奏轻快、旋律明亮的歌曲来延续这种美好的心情，希望你能一直对生活保持热情！'
 })
 
 // 响应式数据
@@ -243,13 +249,20 @@ const displayAiResult = computed(() => {
   return props.aiEmotionResult || (isTestMode.value ? testData.value.aiResult : '')
 })
 
-// 扩展的AI分析内容（可以根据实际后端返回的数据进行调整）
+// 扩展的AI分析内容 - 从props获取，测试模式使用测试数据
 const extendedAiAnalysis = computed(() => {
+  // 优先使用从API返回的AI分析说明
+  if (props.extendedAiAnalysis) {
+    return props.extendedAiAnalysis
+  }
+  
+  // 测试模式使用测试数据
   if (isTestMode.value) {
     return '从你的描述中，我感受到了满满的正能量！你对阳光和音乐的渴望表现出典型的快乐情绪特征。建议你选择一些节奏轻快、旋律明亮的歌曲来延续这种美好的心情。'
   }
-  // 实际应用中这里可以从props或API获取
-  return '基于你的情绪描述，我为你推荐了符合当前心境的音乐。希望这些歌曲能够陪伴你度过美好的时光。'
+  
+  // 如果没有API数据且不是测试模式，返回空字符串
+  return ''
 })
 
 onMounted(() => {
@@ -583,6 +596,8 @@ defineExpose({
 // AI情绪分析卡片容器
 .emotion-analysis-wrapper {
   position: relative;
+  margin-left: 3rem;
+  margin-right: 3rem;
   margin-bottom: 2rem;
   z-index: 2;
 }
@@ -593,12 +608,14 @@ defineExpose({
   border-radius: 20px;
   border: 1px solid rgba(255, 255, 255, 0.2);
   backdrop-filter: blur(15px);
-  padding: 1.5rem 2rem;
+  padding: 2rem 2.5rem;
+  min-height: 160px;
   cursor: pointer;
   transition: all 0.3s ease;
   
   @media (max-width: 767px) {
-    padding: 1rem 1.5rem;
+    padding: 1.5rem 2rem;
+    min-height: 280px;
   }
   
   // 悬停效果
@@ -695,10 +712,28 @@ defineExpose({
   }
 }
 
+.ex-analysis {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-style: italic;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  
+  @media (max-width: 767px) {
+    font-size: 0.85rem;
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+}
+
 // 展开按钮
 .expand-button {
   position: absolute;
-  bottom: 0.75rem;
+  bottom: -3rem;
   right: 50%;
   transform: translateX(50%);
   width: 32px;
@@ -725,7 +760,7 @@ defineExpose({
   }
   
   @media (max-width: 767px) {
-    bottom: 0.5rem;
+    bottom: -3rem;
     width: 28px;
     height: 28px;
     
@@ -943,6 +978,7 @@ defineExpose({
   gap: 1.5rem;
   align-content: start;
   overflow-y: auto;
+  padding-top: 0.5rem;
   padding-bottom: 2rem;
   position: relative;
   z-index: 2;
@@ -1201,7 +1237,8 @@ defineExpose({
   }
   
   .emotion-analysis-card {
-    padding: 1rem 1.5rem;
+    padding: 1.5rem 2rem;
+    min-height: 120px; // 保持一定高度
   }
   
   .results-grid {

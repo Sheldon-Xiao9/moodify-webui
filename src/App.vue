@@ -24,6 +24,7 @@
           :error-message="errorMessage"
           :ai-emotion-result="aiEmotionResult"
           :user-input="userInputText"
+          :extended-ai-analysis="extendedAiAnalysis"
           @refresh="handleRefresh"
           @back="handleBack"
           @card-expand="handleCardExpand"
@@ -85,6 +86,10 @@ const toastMessage = ref('')
 const currentEmotion = ref(null)
 const aiEmotionResult = ref('')
 const userInputText = ref('')
+const extendedAiAnalysis = ref('')
+
+// 测试模式检测
+const isTestMode = ref(import.meta.env.DEV || !import.meta.env.VITE_API_URL)
 
 // 计算属性
 const transitionName = computed(() => {
@@ -128,6 +133,9 @@ const initializeApp = async () => {
     currentView.value = 'home'
     
     console.log('Application initialized successfully')
+    if (isTestMode.value) {
+      console.log('Running in test mode - using mock data')
+    }
   } catch (error) {
     console.error('Failed to initialize app:', error)
     showError('应用初始化失败，请刷新页面重试')
@@ -182,6 +190,7 @@ const handleProcessingComplete = (data) => {
   
   console.log('Switched to results view with tracks:', musicTracks.value.length)
   console.log('AI result:', aiEmotionResult.value, 'User input:', userInputText.value)
+  console.log('Extended AI analysis:', extendedAiAnalysis.value)
 }
 
 // 获取音乐推荐
@@ -190,8 +199,13 @@ const fetchMusicRecommendations = async (emotionData) => {
   hasError.value = false
   
   try {
-    // 模拟API调用
-    await simulateMusicAPI(emotionData)
+    if (isTestMode.value) {
+      // 测试模式：使用模拟数据
+      await simulateMusicAPI(emotionData)
+    } else {
+      // 生产模式：调用真实API
+      await fetchFromRealAPI(emotionData)
+    }
     
     console.log('Music recommendations fetched successfully:', musicTracks.value.length, 'tracks')
   } catch (error) {
@@ -204,7 +218,41 @@ const fetchMusicRecommendations = async (emotionData) => {
   }
 }
 
-// 模拟音乐API调用
+// 调用真实API
+const fetchFromRealAPI = async (emotionData) => {
+  try {
+    // 实际的API调用逻辑
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/recommendations`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${import.meta.env.VITE_API_TOKEN || ''}`
+      },
+      body: JSON.stringify({
+        emotion: emotionData.text,
+        mood: emotionData.mood,
+        aiResult: emotionData.aiResult
+      })
+    })
+    
+    if (!response.ok) {
+      throw new Error(`API Error: ${response.status} ${response.statusText}`)
+    }
+    
+    const data = await response.json()
+    
+    // 设置API返回的数据
+    musicTracks.value = data.tracks || []
+    extendedAiAnalysis.value = data.aiAnalysis || '' // 从API获取AI分析
+    
+    console.log('Real API response:', data)
+  } catch (error) {
+    console.error('Real API call failed:', error)
+    throw new Error('无法连接到推荐服务，请稍后重试')
+  }
+}
+
+// 模拟音乐API调用（仅测试模式使用）
 const simulateMusicAPI = async (emotionData) => {
   // 模拟网络延迟（在进度条运行期间完成）
   await new Promise(resolve => setTimeout(resolve, 1500))
@@ -213,7 +261,11 @@ const simulateMusicAPI = async (emotionData) => {
   const mockTracks = generateMockTracks(emotionData)
   musicTracks.value = mockTracks
   
+  // 测试模式下生成模拟AI分析
+  extendedAiAnalysis.value = generateMockAiAnalysis(emotionData)
+  
   console.log('Generated mock tracks:', mockTracks.length)
+  console.log('Generated mock AI analysis:', extendedAiAnalysis.value)
   
   // 模拟偶尔的API错误（测试环境下禁用）
   // if (Math.random() < 0.05) { // 5% 概率失败
@@ -221,7 +273,22 @@ const simulateMusicAPI = async (emotionData) => {
   // }
 }
 
-// 生成模拟音乐数据
+// 生成模拟AI分析（仅测试模式使用）
+const generateMockAiAnalysis = (emotionData) => {
+  const emotion = emotionData.aiResult || emotionData.emotion || '快乐'
+  
+  const mockAnalysisTemplates = {
+    '快乐': '从你充满活力的描述中，我感受到了满溢而出的积极能量！你对明媚阳光和动人旋律的强烈渴望，正是快乐情绪的鲜明写照。我精心挑选了一些节奏欢快跳跃、旋律明亮如阳光的歌曲，希望能延续这份美好的心境，让愉悦的涟漪在你心中持续荡漾！',
+    '悲伤': '我深深理解此刻萦绕在你心头的低落感受，人生旅途中这样的时刻在所难免。请相信，音乐拥有抚慰心灵的独特魔力。我为你甄选了一些温柔细腻、饱含理解与共鸣的旋律，它们不会刻意驱散阴霾，而是像一位沉默的挚友，静静陪伴你穿越这段略显沉重的时光。',
+    '愤怒': '你字里行间涌动的炽热与不满，我清晰地感受到了。愤怒往往是心灵对不公的正当呐喊，而音乐可以成为你安全宣泄的出口。这些推荐的歌曲，以其强劲有力的节奏和充满爆发力的演绎，旨在帮助你将心中翻腾的烈焰转化为有形的声浪，让情绪得到畅快淋漓的释放。',
+    '兴奋': '你传递的兴奋之情极具感染力！这种按捺不住、跃跃欲试的昂扬状态充满了生命的活力。为了匹配你高涨的能量场，我特别推荐了节奏感爆棚、能量持续上扬的歌曲，它们澎湃的鼓点和昂扬的旋律，定能成为你此刻激昂心情最完美的背景音和助推器！',
+    '平静': '从你淡然的描述中，我感受到了一种如深潭止水般的安宁与祥和。这份内心的澄澈与平和，是喧嚣世界中难得的珍宝。我为你寻觅了一些同样宁静致远、意境深邃悠扬的音乐，如同微风拂过湖面，希望能轻柔地延续并滋养你此刻这份珍贵的平和心境。'
+  }
+  
+  return mockAnalysisTemplates[emotion] || mockAnalysisTemplates['快乐']
+}
+
+// 生成模拟音乐数据（仅测试模式使用）
 const generateMockTracks = (emotionData) => {
   const mood = emotionData.aiResult || emotionData.mood || 'happy'
   const emotionText = emotionData.text || ''
@@ -312,6 +379,7 @@ const handleBack = () => {
   currentEmotion.value = null
   aiEmotionResult.value = ''
   userInputText.value = ''
+  extendedAiAnalysis.value = ''
   hasError.value = false
   isLoadingTracks.value = false
   
