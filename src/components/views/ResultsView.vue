@@ -20,7 +20,7 @@
         :style="!isAnalysisExpanded ? {} : {}"
       >
         <!-- 默认卡片内容 -->
-        <div class="analysis-content" v-if="!isAnalysisExpanded && !isAnalysisExpanding && props.extendedAiAnalysis">
+        <div class="analysis-content" v-if="!isAnalysisExpanded && !isAnalysisExpanding && displayExtendedAnalysis">
           <div class="user-input-section">
             <span class="label">你的情绪描述：</span>
             <span class="user-text">"{{ displayUserInput }}"</span>
@@ -28,7 +28,7 @@
           <div class="ai-result-section">
             <span class="label">AI识别情绪：</span>
             <span class="ai-emotion">{{ displayAiResult }}</span> |
-            <span class="ex-analysis">{{ props.extendedAiAnalysis }}</span>
+            <span class="ex-analysis">{{ displayExtendedAnalysis }}</span>
           </div>
           
           <!-- 展开按钮 -->
@@ -155,9 +155,9 @@
                 </div>
                 
                 <!-- 扩展的AI分析内容 -->
-                <div class="ai-explanation" v-if="props.extendedAiAnalysis">
+                <div class="ai-explanation" v-if="displayExtendedAnalysis">
                   <h4 class="explanation-title">AI 的话</h4>
-                  <p class="explanation-text">{{ props.extendedAiAnalysis }}</p>
+                  <p class="explanation-text">{{ displayExtendedAnalysis }}</p>
                 </div>
               </div>
             </div>
@@ -229,8 +229,7 @@ const isTestMode = ref(import.meta.env.DEV || !import.meta.env.VITE_API_URL)
 // 测试数据 - 只在测试模式下使用
 const testData = ref({
   userInput: '今天心情很好，阳光明媚，想听一些轻松愉快的音乐！我希望能找到一些让人感到温暖和充满活力的歌曲，最好是那种能让人想要起舞或者微笑的旋律。',
-  aiResult: '快乐',
-  // extendedAiAnalysis: '从你的描述中，我感受到了满满的正能量！你对阳光和音乐的渴望表现出典型的快乐情绪特征。我为你选择了一些节奏轻快、旋律明亮的歌曲来延续这种美好的心情，希望你能一直对生活保持热情！'
+  aiResult: '快乐'
 })
 
 // 响应式数据
@@ -264,35 +263,17 @@ const emojiMood = computed(() => {
   // 中文到英文的映射
   const moodMapping = {
     '快乐': 'happy',
-    '开心': 'happy',
-    '愉快': 'happy',
-    '高兴': 'happy',
     '悲伤': 'sad',
-    '难过': 'sad',
-    '沮丧': 'sad',
-    '忧郁': 'sad',
     '愤怒': 'angry',
-    '生气': 'angry',
-    '愤慨': 'angry',
-    '恼怒': 'angry',
     '兴奋': 'excited',
-    '激动': 'excited',
-    '狂热': 'excited',
-    '亢奋': 'excited',
-    '烦躁': 'annoyed',
-    '烦恼': 'annoyed',
-    '不耐烦': 'annoyed',
-    '厌烦': 'annoyed',
-    '平静': 'happy', // 默认显示happy
-    '冷静': 'happy',
-    '安静': 'happy'
+    '烦躁': 'annoyed'
   }
   
   return moodMapping[aiResult] || 'happy'
 })
 
 // 扩展的AI分析内容 - 从props获取，测试模式使用测试数据
-const extendedAiAnalysis = computed(() => {
+const displayExtendedAnalysis = computed(() => {
   // 优先使用从API返回的AI分析说明
   if (props.extendedAiAnalysis) {
     return props.extendedAiAnalysis

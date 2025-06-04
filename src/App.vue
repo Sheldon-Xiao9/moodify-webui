@@ -172,6 +172,11 @@ const handleProcessingComplete = (data) => {
   aiEmotionResult.value = data.aiResult || '快乐'
   userInputText.value = data.emotion || userInputText.value
   
+  // 生成AI分析说明，使用正确的情绪结果
+  if (isTestMode.value) {
+    extendedAiAnalysis.value = generateMockAiAnalysis(data.aiResult || '快乐')
+  }
+  
   // 确保有音乐数据再切换视图
   if (musicTracks.value.length === 0) {
     console.log('No tracks available, generating mock data...')
@@ -261,28 +266,20 @@ const simulateMusicAPI = async (emotionData) => {
   const mockTracks = generateMockTracks(emotionData)
   musicTracks.value = mockTracks
   
-  // 测试模式下生成模拟AI分析
-  extendedAiAnalysis.value = generateMockAiAnalysis(emotionData)
-  
   console.log('Generated mock tracks:', mockTracks.length)
-  console.log('Generated mock AI analysis:', extendedAiAnalysis.value)
   
-  // 模拟偶尔的API错误（测试环境下禁用）
-  // if (Math.random() < 0.05) { // 5% 概率失败
-  //   throw new Error('网络连接超时，请稍后重试')
-  // }
+  // 注意：不在这里生成AI分析，而是在handleProcessingComplete中生成
+  // 这样可以确保使用正确的AI识别结果
 }
 
 // 生成模拟AI分析（仅测试模式使用）
-const generateMockAiAnalysis = (emotionData) => {
-  const emotion = emotionData.aiResult || emotionData.emotion || '快乐'
-  
+const generateMockAiAnalysis = (emotion) => {
   const mockAnalysisTemplates = {
     '快乐': '从你充满活力的描述中，我感受到了满溢而出的积极能量！你对明媚阳光和动人旋律的强烈渴望，正是快乐情绪的鲜明写照。我精心挑选了一些节奏欢快跳跃、旋律明亮如阳光的歌曲，希望能延续这份美好的心境，让愉悦的涟漪在你心中持续荡漾！',
     '悲伤': '我深深理解此刻萦绕在你心头的低落感受，人生旅途中这样的时刻在所难免。请相信，音乐拥有抚慰心灵的独特魔力。我为你甄选了一些温柔细腻、饱含理解与共鸣的旋律，它们不会刻意驱散阴霾，而是像一位沉默的挚友，静静陪伴你穿越这段略显沉重的时光。',
     '愤怒': '你字里行间涌动的炽热与不满，我清晰地感受到了。愤怒往往是心灵对不公的正当呐喊，而音乐可以成为你安全宣泄的出口。这些推荐的歌曲，以其强劲有力的节奏和充满爆发力的演绎，旨在帮助你将心中翻腾的烈焰转化为有形的声浪，让情绪得到畅快淋漓的释放。',
     '兴奋': '你传递的兴奋之情极具感染力！这种按捺不住、跃跃欲试的昂扬状态充满了生命的活力。为了匹配你高涨的能量场，我特别推荐了节奏感爆棚、能量持续上扬的歌曲，它们澎湃的鼓点和昂扬的旋律，定能成为你此刻激昂心情最完美的背景音和助推器！',
-    '平静': '从你淡然的描述中，我感受到了一种如深潭止水般的安宁与祥和。这份内心的澄澈与平和，是喧嚣世界中难得的珍宝。我为你寻觅了一些同样宁静致远、意境深邃悠扬的音乐，如同微风拂过湖面，希望能轻柔地延续并滋养你此刻这份珍贵的平和心境。'
+    '烦躁': '感受到你内心的烦躁和不安。现代生活的压力确实容易让人心烦意乱。我为你选择了一些既能理解你的烦躁，又能帮助缓解紧张情绪的音乐，希望能为你带来一丝慰藉。'
   }
   
   return mockAnalysisTemplates[emotion] || mockAnalysisTemplates['快乐']
