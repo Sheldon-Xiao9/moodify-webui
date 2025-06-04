@@ -126,6 +126,13 @@
         <!-- 展开视图内容 -->
         <div class="expanded-analysis-content">
           <div class="expanded-header">
+            <!-- 表情图标 -->
+            <div class="emotion-emoji">
+              <StaticEmoji 
+                :mood="emojiMood" 
+                size="large"
+              />
+            </div>
             <h2 class="expanded-title">AI 情绪分析结果</h2>
           </div>
           
@@ -178,6 +185,7 @@ import { useAnimationStore } from '@/stores/animations'
 import { useAudioPlayer } from '@/composables/useAudioPlayer'
 import MusicCard from '@/components/core/MusicCard.vue'
 import DynamicBackground from '@/components/core/DynamicBackground.vue'
+import StaticEmoji from '@/components/core/StaticEmoji.vue'
 
 const props = defineProps({
   tracks: {
@@ -247,6 +255,40 @@ const displayUserInput = computed(() => {
 
 const displayAiResult = computed(() => {
   return props.aiEmotionResult || (isTestMode.value ? testData.value.aiResult : '')
+})
+
+// 映射中文情绪到英文表情
+const emojiMood = computed(() => {
+  const aiResult = displayAiResult.value
+  
+  // 中文到英文的映射
+  const moodMapping = {
+    '快乐': 'happy',
+    '开心': 'happy',
+    '愉快': 'happy',
+    '高兴': 'happy',
+    '悲伤': 'sad',
+    '难过': 'sad',
+    '沮丧': 'sad',
+    '忧郁': 'sad',
+    '愤怒': 'angry',
+    '生气': 'angry',
+    '愤慨': 'angry',
+    '恼怒': 'angry',
+    '兴奋': 'excited',
+    '激动': 'excited',
+    '狂热': 'excited',
+    '亢奋': 'excited',
+    '烦躁': 'annoyed',
+    '烦恼': 'annoyed',
+    '不耐烦': 'annoyed',
+    '厌烦': 'annoyed',
+    '平静': 'happy', // 默认显示happy
+    '冷静': 'happy',
+    '安静': 'happy'
+  }
+  
+  return moodMapping[aiResult] || 'happy'
 })
 
 // 扩展的AI分析内容 - 从props获取，测试模式使用测试数据
@@ -805,6 +847,29 @@ defineExpose({
   margin-bottom: 2rem;
   padding-bottom: 1rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  position: relative;
+}
+
+// 表情图标样式
+.emotion-emoji {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+  
+  // 为表情添加一个半透明的背景圆圈
+  &::before {
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 140px;
+    height: 140px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    z-index: -1;
+  }
 }
 
 .expanded-title {
@@ -819,7 +884,7 @@ defineExpose({
 }
 
 .expanded-body {
-  max-height: calc(100% - 120px);
+  max-height: calc(100% - 200px);
   overflow-y: auto;
   padding-right: 1rem;
   
