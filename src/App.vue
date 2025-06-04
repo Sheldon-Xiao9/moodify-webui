@@ -36,16 +36,6 @@
       </Transition>
     </div>
     
-    <!-- 全局加载遮罩 -->
-    <Transition name="fade">
-      <div class="global-loading" v-if="isGlobalLoading">
-        <div class="loading-content">
-          <div class="loading-spinner"></div>
-          <p class="loading-text">{{ loadingText }}</p>
-        </div>
-      </div>
-    </Transition>
-    
     <!-- 错误提示 -->
     <Transition name="slide-up">
       <div class="error-toast" v-if="showErrorToast">
@@ -75,8 +65,6 @@ const resultsViewRef = ref(null)
 
 // 响应式数据
 const currentView = ref('home')
-const isGlobalLoading = ref(false)
-const loadingText = ref('')
 const isLoadingTracks = ref(false)
 const musicTracks = ref([])
 const hasError = ref(false)
@@ -139,8 +127,6 @@ const initializeApp = async () => {
   } catch (error) {
     console.error('Failed to initialize app:', error)
     showError('应用初始化失败，请刷新页面重试')
-  } finally {
-    isGlobalLoading.value = false
   }
 }
 
@@ -443,7 +429,7 @@ const handleGlobalError = (event) => {
 // 页面卸载前处理
 const handleBeforeUnload = (event) => {
   // 如果有正在进行的操作，提醒用户
-  if (isGlobalLoading.value || isLoadingTracks.value) {
+  if (isLoadingTracks.value) {
     event.preventDefault()
     event.returnValue = '正在处理中，确定要离开吗？'
   }
@@ -497,53 +483,6 @@ const handleKeyPress = (event) => {
 .slide-right-leave-to {
   transform: translateX(100%);
   opacity: 0;
-}
-
-// 全局加载遮罩
-.global-loading {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(18, 18, 18, 0.95);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-  backdrop-filter: blur(10px);
-}
-
-.loading-content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
-}
-
-.loading-spinner {
-  width: 60px;
-  height: 60px;
-  border: 4px solid rgba(255, 255, 255, 0.2);
-  border-top: 4px solid #FFD166;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.loading-text {
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 1.1rem;
-  text-align: center;
-  margin: 0;
 }
 
 // 错误提示Toast
@@ -632,17 +571,6 @@ const handleKeyPress = (event) => {
   }
 }
 
-// 淡入淡出动画
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.3s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
-
 // 无障碍支持
 @media (prefers-reduced-motion: reduce) {
   .slide-left-enter-active,
@@ -650,14 +578,8 @@ const handleKeyPress = (event) => {
   .slide-right-enter-active,
   .slide-right-leave-active,
   .slide-up-enter-active,
-  .slide-up-leave-active,
-  .fade-enter-active,
-  .fade-leave-active {
+  .slide-up-leave-active {
     transition: none;
-  }
-  
-  .loading-spinner {
-    animation: none;
   }
 }
 
@@ -666,10 +588,6 @@ const handleKeyPress = (event) => {
   .toast-content {
     background: #EF476F;
     border: 2px solid white;
-  }
-  
-  .global-loading {
-    background: rgba(0, 0, 0, 0.98);
   }
 }
 </style>

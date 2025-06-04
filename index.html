@@ -64,7 +64,7 @@
       position: relative;
     }
     
-    /* Loading Spinner */
+    /* Loading Screen */
     .loading-screen {
       position: fixed;
       top: 0;
@@ -79,30 +79,93 @@
       z-index: 10000;
     }
     
-    .loading-spinner {
-      width: 50px;
-      height: 50px;
-      border: 3px solid rgba(255, 255, 255, 0.3);
-      border-top: 3px solid #FFD166;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin-bottom: 1rem;
+    /* 音乐波形加载动画 - 正方形版本 */
+    .music-wave-loader {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      height: 60px;
+      margin-bottom: 2rem;
     }
     
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
+    .wave-bar {
+      width: 20px;
+      height: 20px;
+      background: linear-gradient(to bottom, #FF5B5B, #FFC852);
+      border-radius: 2px;
+      animation: waveAnimation 1.2s ease-in-out infinite;
+      transform-origin: center;
+    }
+    
+    .wave-bar:nth-child(1) {
+      animation-delay: 0s;
+    }
+    
+    .wave-bar:nth-child(2) {
+      animation-delay: 0.1s;
+    }
+    
+    .wave-bar:nth-child(3) {
+      animation-delay: 0.2s;
+    }
+    
+    .wave-bar:nth-child(4) {
+      animation-delay: 0.3s;
+    }
+    
+    .wave-bar:nth-child(5) {
+      animation-delay: 0.4s;
+    }
+    
+    @keyframes waveAnimation {
+      0%, 100% {
+        transform: scale(0.4);
+        opacity: 0.7;
+      }
+      50% {
+        transform: scale(1);
+        opacity: 1;
+      }
     }
     
     .loading-text {
-      color: rgba(255, 255, 255, 0.8);
-      font-size: 14px;
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 16px;
       text-align: center;
+      font-weight: 300;
+      letter-spacing: 0.5px;
     }
     
     /* Hide loading screen when Vue is ready */
     .vue-app .loading-screen {
       display: none;
+    }
+    
+    /* 响应式调整 */
+    @media (max-width: 767px) {
+      .music-wave-loader {
+        height: 50px;
+        gap: 4px;
+        margin-bottom: 1.5rem;
+      }
+      
+      .wave-bar {
+        width: 16px;
+        height: 16px;
+      }
+      
+      .loading-text {
+        font-size: 14px;
+      }
+    }
+    
+    /* 减少动画效果（用户偏好） */
+    @media (prefers-reduced-motion: reduce) {
+      .wave-bar {
+        animation: none;
+        transform: scale(0.7);
+      }
     }
   </style>
   
@@ -132,7 +195,14 @@
   <div id="app">
     <!-- Loading Screen (显示在Vue应用加载前) -->
     <div class="loading-screen">
-      <div class="loading-spinner"></div>
+      <!-- 音乐波形加载动画 -->
+      <div class="music-wave-loader">
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+      </div>
       <div class="loading-text">
         正在启动 Moodify...
       </div>

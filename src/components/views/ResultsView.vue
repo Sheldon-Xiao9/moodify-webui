@@ -86,7 +86,10 @@
     
     <!-- 加载状态 -->
     <div class="loading-overlay" v-if="isLoading">
-      <div class="loading-spinner"></div>
+      <!-- 音乐波形加载动画 -->
+      <div class="music-wave-loader">
+        <div class="wave-bar" v-for="i in 5" :key="i" :style="{ animationDelay: `${(i-1) * 0.1}s` }"></div>
+      </div>
       <p class="loading-text">正在加载音乐推荐...</p>
     </div>
     
@@ -1153,20 +1156,46 @@ defineExpose({
   backdrop-filter: blur(10px);
 }
 
-.loading-spinner {
-  width: 60px;
+// 音乐波形加载动画
+.music-wave-loader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   height: 60px;
-  border: 4px solid rgba(255, 255, 255, 0.2);
-  border-top: 4px solid #FFD166;
-  border-radius: 50%;
-  animation: refreshSpin 1s linear infinite;
-  margin-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+
+.wave-bar {
+  width: 20px;
+  height: 20px;
+  background: linear-gradient(to bottom, #FF5B5B, #FFC852);
+  border-radius: 2px;
+  animation: waveAnimation 1.2s ease-in-out infinite;
+  transform-origin: center;
+}
+
+@keyframes waveAnimation {
+  0%, 100% {
+    transform: scale(0.4);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 .loading-text {
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1.1rem;
   text-align: center;
+  font-weight: 300;
+  letter-spacing: 0.5px;
+  
+  @media (max-width: 767px) {
+    font-size: 1rem;
+  }
 }
 
 // 错误状态
@@ -1250,6 +1279,23 @@ defineExpose({
 }
 
 // 响应式调整
+@media (max-width: 767px) {
+  .music-wave-loader {
+    height: 50px;
+    gap: 4px;
+    margin-bottom: 1.5rem;
+  }
+  
+  .wave-bar {
+    width: 16px;
+    height: 16px;
+  }
+  
+  .loading-text {
+    font-size: 1rem;
+  }
+}
+
 @media (max-height: 700px) {
   .results-view {
     padding: 1rem;
@@ -1270,6 +1316,19 @@ defineExpose({
   
   .bottom-controls {
     padding: 0.75rem 0;
+  }
+  
+  .music-wave-loader {
+    height: 40px;
+  }
+  
+  .wave-bar {
+    width: 16px;
+    height: 16px;
+  }
+  
+  .loading-text {
+    font-size: 0.9rem;
   }
 }
 
@@ -1296,6 +1355,19 @@ defineExpose({
       row-gap: 0.7rem;
     }
   }
+  
+  .music-wave-loader {
+    height: 35px;
+  }
+  
+  .wave-bar {
+    width: 14px;
+    height: 14px;
+  }
+  
+  .loading-text {
+    font-size: 0.8rem;
+  }
 }
 
 // 无障碍支持
@@ -1305,7 +1377,11 @@ defineExpose({
     transition: none;
   }
   
-  .loading-spinner,
+  .wave-bar {
+    animation: none;
+    transform: scale(0.7);
+  }
+  
   .refresh-icon {
     animation: none;
   }
@@ -1330,6 +1406,10 @@ defineExpose({
   .back-button {
     background: rgba(255, 255, 255, 0.2);
     border: 2px solid rgba(255, 255, 255, 0.5);
+  }
+  
+  .wave-bar {
+    background: #FF5B5B;
   }
 }
 
