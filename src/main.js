@@ -2,6 +2,7 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import { gsap } from 'gsap'
 import App from './App.vue'
+import router from './router'
 
 // 导入全局样式
 import './assets/styles/main.scss'
@@ -19,6 +20,9 @@ const app = createApp(App)
 // 创建并使用Pinia状态管理
 const pinia = createPinia()
 app.use(pinia)
+
+// 使用路由
+app.use(router)
 
 // 全局属性和方法
 app.config.globalProperties.$gsap = gsap

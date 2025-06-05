@@ -2,38 +2,12 @@
   <AppContainer>
     <!-- 主应用内容 -->
     <div class="app-content">
-      <!-- 视图路由 -->
-      <Transition :name="transitionName" mode="out-in">
-        <!-- 首页视图 -->
-        <HomeView
-          v-if="currentView === 'home'"
-          key="home"
-          ref="homeViewRef"
-          @emotion-submitted="handleEmotionSubmitted"
-          @processing-complete="handleProcessingComplete"
-        />
-        
-        <!-- 结果视图 -->
-        <ResultsView
-          v-else-if="currentView === 'results'"
-          key="results"
-          ref="resultsViewRef"
-          :tracks="musicTracks"
-          :is-loading="isLoadingTracks"
-          :has-error="hasError"
-          :error-message="errorMessage"
-          :ai-emotion-result="aiEmotionResult"
-          :user-input="userInputText"
-          :extended-ai-analysis="extendedAiAnalysis"
-          @refresh="handleRefresh"
-          @back="handleBack"
-          @card-expand="handleCardExpand"
-          @card-collapse="handleCardCollapse"
-          @card-play="handleCardPlay"
-          @card-pause="handleCardPause"
-          @retry="handleRetry"
-        />
-      </Transition>
+      <!-- 路由视图 -->
+      <router-view v-slot="{ Component, route }">
+        <Transition :name="getTransitionName(route)" mode="out-in">
+          <component :is="Component" :key="route.path" />
+        </Transition>
+      </router-view>
     </div>
     
     <!-- 错误提示 -->
@@ -50,21 +24,19 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, provide, onMounted, onUnmounted, nextTick } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useAnimationStore } from '@/stores/animations'
 import AppContainer from '@/components/layout/AppContainer.vue'
-import HomeView from '@/components/views/HomeView.vue'
-import ResultsView from '@/components/views/ResultsView.vue'
+
+// 路由
+const router = useRouter()
+const route = useRoute()
 
 // 应用状态管理
 const store = useAnimationStore()
 
-// 组件引用
-const homeViewRef = ref(null)
-const resultsViewRef = ref(null)
-
 // 响应式数据
-const currentView = ref('home')
 const isLoadingTracks = ref(false)
 const musicTracks = ref([])
 const hasError = ref(false)
@@ -77,16 +49,17 @@ const userInputText = ref('')
 const extendedAiAnalysis = ref('')
 
 // 测试模式检测
-const isTestMode = ref(import.meta.env.DEV || !import.meta.env.VITE_API_URL)
+const isTestMode = ref(import.meta.env.DEV || !import.meta.env.VITE_API_BASE_URL)
 
-// 计算属性
-const transitionName = computed(() => {
-  if (currentView.value === 'home') {
+// 获取过渡动画名称
+const getTransitionName = (route) => {
+  if (route.name === 'home') {
     return 'slide-right'
-  } else {
+  } else if (route.name === 'results') {
     return 'slide-left'
   }
-})
+  return 'fade'
+}
 
 // 生命周期
 onMounted(() => {
@@ -106,20 +79,9 @@ onUnmounted(() => {
   document.removeEventListener('keydown', handleKeyPress)
 })
 
-// 监听store状态变化
-watch(() => store.currentView, (newView) => {
-  if (newView && newView !== currentView.value) {
-    currentView.value = newView
-  }
-})
-
 // 初始化应用
 const initializeApp = async () => {
   try {
-    // 设置初始状态
-    store.setCurrentView('home')
-    currentView.value = 'home'
-    
     console.log('Application initialized successfully')
     if (isTestMode.value) {
       console.log('Running in test mode - using mock data')
@@ -175,13 +137,23 @@ const handleProcessingComplete = (data) => {
     musicTracks.value = generateMockTracks(mockData)
   }
   
-  // 切换到结果视图
-  currentView.value = 'results'
-  store.setCurrentView('results')
-  
-  console.log('Switched to results view with tracks:', musicTracks.value.length)
-  console.log('AI result:', aiEmotionResult.value, 'User input:', userInputText.value)
-  console.log('Extended AI analysis:', extendedAiAnalysis.value)
+  // 等待数据确认后再导航
+  nextTick(() => {
+    // 保存数据到sessionStorage并导航到结果页
+    sessionStorage.setItem('moodify_emotion_data', JSON.stringify({
+      emotion: data.emotion,
+      aiResult: data.aiResult,
+      tracks: musicTracks.value,
+      analysis: extendedAiAnalysis.value
+    }))
+    
+    // 导航到结果页
+    router.push({ name: 'results' })
+    
+    console.log('Navigated to results view with tracks:', musicTracks.value.length)
+    console.log('AI result:', aiEmotionResult.value, 'User input:', userInputText.value)
+    console.log('Extended AI analysis:', extendedAiAnalysis.value)
+  })
 }
 
 // 获取音乐推荐
@@ -354,8 +326,8 @@ const handleRefresh = async () => {
 
 // 处理返回
 const handleBack = () => {
-  currentView.value = 'home'
-  store.setCurrentView('home')
+  // 清除sessionStorage数据
+  sessionStorage.removeItem('moodify_emotion_data')
   
   // 重置数据
   musicTracks.value = []
@@ -366,10 +338,8 @@ const handleBack = () => {
   hasError.value = false
   isLoadingTracks.value = false
   
-  // 重置首页状态
-  if (homeViewRef.value) {
-    homeViewRef.value.resetView()
-  }
+  // 导航回首页
+  router.push({ name: 'home' })
   
   console.log('Returned to home view')
 }
@@ -438,7 +408,7 @@ const handleBeforeUnload = (event) => {
 // 键盘事件处理
 const handleKeyPress = (event) => {
   // ESC键返回
-  if (event.key === 'Escape' && currentView.value === 'results') {
+  if (event.key === 'Escape' && route.name === 'results') {
     handleBack()
   }
   
@@ -447,6 +417,33 @@ const handleKeyPress = (event) => {
     handleRetry()
   }
 }
+
+// 向子组件提供数据和方法
+provide('appData', {
+  // 使用 computed 或 getter 确保响应式
+  get isLoadingTracks() { return isLoadingTracks.value },
+  get musicTracks() { return musicTracks.value },
+  get hasError() { return hasError.value },
+  get errorMessage() { return errorMessage.value },
+  get currentEmotion() { return currentEmotion.value },
+  get aiEmotionResult() { return aiEmotionResult.value },
+  get userInputText() { return userInputText.value },
+  get extendedAiAnalysis() { return extendedAiAnalysis.value },
+  get isTestMode() { return isTestMode.value },
+  // 方法
+  handleEmotionSubmitted,
+  handleProcessingComplete,
+  fetchMusicRecommendations,
+  handleRefresh,
+  handleBack,
+  handleRetry,
+  showError,
+  // 卡片操作方法
+  handleCardExpand,
+  handleCardCollapse,
+  handleCardPlay,
+  handleCardPause
+})
 </script>
 
 <style lang="scss" scoped>

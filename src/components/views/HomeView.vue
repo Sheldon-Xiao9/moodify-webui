@@ -51,14 +51,15 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, nextTick, onMounted } from 'vue'
+import { ref, computed, watch, nextTick, onMounted, inject } from 'vue'
 import { useAnimationStore } from '@/stores/animations'
 import DynamicEmoji from '@/components/core/DynamicEmoji.vue'
 import EmotionInput from '@/components/core/EmotionInput.vue'
 import ProgressLoader from '@/components/core/ProgressLoader.vue'
 import DynamicBackground from '@/components/core/DynamicBackground.vue'
 
-const emit = defineEmits(['emotion-submitted', 'processing-complete'])
+// 注入App.vue提供的数据和方法
+const appData = inject('appData', {})
 
 const store = useAnimationStore()
 
@@ -119,12 +120,14 @@ const handleEmotionSubmit = async (emotionText) => {
   // 开始处理
   store.setProcessing(true)
   
-  // 发射事件给父组件
-  emit('emotion-submitted', {
-    text: emotionText
-  })
-  
   console.log('Emotion submitted:', emotionText)
+  
+  // 调用App.vue提供的方法
+  if (appData.handleEmotionSubmitted) {
+    appData.handleEmotionSubmitted({
+      text: emotionText
+    })
+  }
   
   // 启动AI分析处理（后台进行）
   processEmotionWithAI(emotionText)
@@ -166,12 +169,14 @@ const handleProcessComplete = () => {
     updateEmojiByAIResult(aiEmotionResult.value)
   }
   
-  // 发射完成事件
-  emit('processing-complete', {
-    emotion: submittedEmotion.value,
-    aiResult: aiEmotionResult.value,
-    mood: currentMood.value
-  })
+  // 调用App.vue提供的方法
+  if (appData.handleProcessingComplete) {
+    appData.handleProcessingComplete({
+      emotion: submittedEmotion.value,
+      aiResult: aiEmotionResult.value,
+      mood: currentMood.value
+    })
+  }
 }
 
 // AI情绪分析处理函数

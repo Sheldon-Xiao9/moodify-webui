@@ -161,7 +161,7 @@
     <!-- 背景遮罩（仅当卡片展开时显示） -->
     <div 
       class="card-backdrop" 
-      v-if="isExpanded"
+      v-if="isExpanded || isExpanding"
       @click="handleClose"
     ></div>
   </div>

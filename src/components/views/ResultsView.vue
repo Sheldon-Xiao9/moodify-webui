@@ -4,7 +4,7 @@
     <DynamicBackground variant="results" />
     
     <!-- AI情绪分析结果展示区域 -->
-    <div class="emotion-analysis-wrapper" v-if="props.aiEmotionResult || (isTestMode && testData.userInput)">
+    <div class="emotion-analysis-wrapper" v-if="displayAiResult || (isTestMode && testData.userInput)">
       <div 
         class="emotion-analysis-card"
         :class="{ 
@@ -43,7 +43,7 @@
     
     <!-- 推荐结果网格 -->
     <div class="results-grid">
-      <TransitionGroup name="card" appear>
+      <TransitionGroup name="card" appear v-if="tracks.length > 0">
         <MusicCard
           v-for="(track, index) in tracks"
           :key="track.id"
@@ -115,7 +115,7 @@
       <!-- 背景遮罩 -->
       <div 
         class="analysis-backdrop" 
-        v-if="isAnalysisExpanded || isAnalysisCollapsing"
+        v-if="isAnalysisExpanded || isAnalysisExpanding || isAnalysisCollapsing"
         @click="handleAnalysisClose"
       ></div>
       
@@ -183,45 +183,15 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick, inject } from 'vue'
 import { useAnimationStore } from '@/stores/animations'
 import { useAudioPlayer } from '@/composables/useAudioPlayer'
 import MusicCard from '@/components/core/MusicCard.vue'
 import DynamicBackground from '@/components/core/DynamicBackground.vue'
 import StaticEmoji from '@/components/core/StaticEmoji.vue'
 
-const props = defineProps({
-  tracks: {
-    type: Array,
-    default: () => []
-  },
-  isLoading: {
-    type: Boolean,
-    default: false
-  },
-  hasError: {
-    type: Boolean,
-    default: false
-  },
-  errorMessage: {
-    type: String,
-    default: '网络连接错误，请稍后重试'
-  },
-  aiEmotionResult: {
-    type: String,
-    default: ''
-  },
-  userInput: {
-    type: String,
-    default: ''
-  },
-  extendedAiAnalysis: {
-    type: String,
-    default: ''
-  }
-})
-
-const emit = defineEmits(['refresh', 'back', 'card-expand', 'card-collapse', 'card-play', 'card-pause', 'retry'])
+// 注入App.vue提供的数据和方法
+const appData = inject('appData', {})
 
 const store = useAnimationStore()
 const { stopAll } = useAudioPlayer()
@@ -248,15 +218,21 @@ const isAnalysisCollapsing = ref(false)
 const originalAnalysisRect = ref(null)
 const analysisCardStyles = ref({})
 
+// 从inject获取数据
+const tracks = computed(() => appData.musicTracks || [])
+const isLoading = computed(() => appData.isLoadingTracks || false)
+const hasError = computed(() => appData.hasError || false)
+const errorMessage = computed(() => appData.errorMessage || '网络连接错误，请稍后重试')
+
 // 计算属性
-const hasRecommendations = computed(() => props.tracks.length > 0)
+const hasRecommendations = computed(() => tracks.value.length > 0)
 
 const displayUserInput = computed(() => {
-  return props.userInput || (isTestMode.value ? testData.value.userInput : '')
+  return appData.userInputText || (isTestMode.value ? testData.value.userInput : '')
 })
 
 const displayAiResult = computed(() => {
-  return props.aiEmotionResult || (isTestMode.value ? testData.value.aiResult : '')
+  return appData.aiEmotionResult || (isTestMode.value ? testData.value.aiResult : '')
 })
 
 // 映射中文情绪到英文表情
@@ -275,11 +251,11 @@ const emojiMood = computed(() => {
   return moodMapping[aiResult] || 'happy'
 })
 
-// 扩展的AI分析内容 - 从props获取，测试模式使用测试数据
+// 扩展的AI分析内容 - 从inject获取，测试模式使用测试数据
 const displayExtendedAnalysis = computed(() => {
-  // 优先使用从API返回的AI分析说明
-  if (props.extendedAiAnalysis) {
-    return props.extendedAiAnalysis
+  // 优先使用从App.vue注入的AI分析说明
+  if (appData.extendedAiAnalysis) {
+    return appData.extendedAiAnalysis
   }
   
   // 测试模式使用测试数据
@@ -287,7 +263,7 @@ const displayExtendedAnalysis = computed(() => {
     return '从你的描述中，我感受到了满满的正能量！你对阳光和音乐的渴望表现出典型的快乐情绪特征。建议你选择一些节奏轻快、旋律明亮的歌曲来延续这种美好的心情。'
   }
   
-  // 如果没有API数据且不是测试模式，返回空字符串
+  // 如果没有数据且不是测试模式，返回空字符串
   return ''
 })
 
@@ -302,7 +278,7 @@ onMounted(() => {
   
   // 预加载音频
   if (hasRecommendations.value) {
-    console.log('Preloading audio for tracks:', props.tracks.slice(0, 3))
+    console.log('Preloading audio for tracks:', tracks.value.slice(0, 3))
   }
 })
 
@@ -315,7 +291,7 @@ onUnmounted(() => {
 })
 
 // 监听tracks变化
-watch(() => props.tracks, (newTracks) => {
+watch(tracks, (newTracks) => {
   if (newTracks.length > 0) {
     console.log('Tracks updated:', newTracks.length, 'tracks')
   }
@@ -449,26 +425,22 @@ const handleAnalysisClose = async () => {
 // 处理卡片展开
 const handleCardExpand = (track) => {
   expandedCard.value = track.id
-  emit('card-expand', track)
   console.log('Card expanded:', track.name)
 }
 
 // 处理卡片收缩
 const handleCardCollapse = (track) => {
   expandedCard.value = null
-  emit('card-collapse', track)
   console.log('Card collapsed:', track.name)
 }
 
 // 处理卡片播放
 const handleCardPlay = (track) => {
-  emit('card-play', track)
   console.log('Card play:', track.name)
 }
 
 // 处理卡片暂停
 const handleCardPause = (track) => {
-  emit('card-pause', track)
   console.log('Card pause:', track.name)
 }
 
@@ -483,7 +455,10 @@ const handleRefresh = async () => {
   
   try {
     await new Promise(resolve => setTimeout(resolve, 500)) // 模拟延迟
-    emit('refresh')
+    // 直接调用注入的刷新方法
+    if (appData.handleRefresh) {
+      await appData.handleRefresh()
+    }
   } finally {
     setTimeout(() => {
       isRefreshing.value = false
@@ -500,12 +475,18 @@ const handleBack = () => {
   store.setCurrentView('home')
   store.resetState()
   
-  emit('back')
+  // 直接调用注入的返回方法
+  if (appData.handleBack) {
+    appData.handleBack()
+  }
 }
 
 // 处理重试
 const handleRetry = () => {
-  emit('retry')
+  // 直接调用注入的重试方法
+  if (appData.handleRetry) {
+    appData.handleRetry()
+  }
 }
 
 // 获取模拟音乐数据（开发用）
