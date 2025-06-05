@@ -64,9 +64,15 @@ router.beforeEach((to, from, next) => {
     
     if (!hasEmotionData && from.name !== 'home') {
       // 如果没有情绪数据且不是从首页来的，重定向到首页
+      console.warn('Redirecting to home: No emotion data found')
       next({ name: 'home' })
       return
     }
+  }
+  
+  // 页面加载进度指示
+  if (to.meta.showProgress !== false) {
+    startPageProgress()
   }
   
   next()
@@ -74,11 +80,23 @@ router.beforeEach((to, from, next) => {
 
 // 全局后置钩子
 router.afterEach((to, from) => {
+  // 结束页面加载进度
+  endPageProgress()
+  
   // 页面访问统计（如果需要）
   if (import.meta.env.PROD) {
     // 这里可以添加页面访问统计逻辑
     console.log('Page view:', to.path)
   }
+  
+  // 页面切换动画完成后的回调
+  setTimeout(() => {
+    // 确保页面渲染完成后再执行某些操作
+    if (to.name === 'results') {
+      // 结果页加载完成，可以预加载音频等
+      console.log('Results page loaded, ready for audio preload')
+    }
+  }, 100)
 })
 
 // 检查情绪数据是否存在
@@ -111,4 +129,88 @@ export const navigateToHome = () => {
 export const getEmotionData = () => {
   const data = sessionStorage.getItem('moodify_emotion_data')
   return data ? JSON.parse(data) : null
+}
+
+// 页面加载进度控制
+let progressTimer = null
+
+const startPageProgress = () => {
+  // 简单的进度指示，可以配合全局加载组件使用
+  if (typeof window !== 'undefined') {
+    document.body.classList.add('page-loading')
+  }
+}
+
+const endPageProgress = () => {
+  // 延迟移除加载状态，确保页面渲染完成
+  if (progressTimer) {
+    clearTimeout(progressTimer)
+  }
+  
+  progressTimer = setTimeout(() => {
+    if (typeof window !== 'undefined') {
+      document.body.classList.remove('page-loading')
+    }
+  }, 150)
+}
+
+// 路由错误处理
+router.onError((error) => {
+  console.error('Router error:', error)
+  
+  // 在开发环境显示详细错误
+  if (import.meta.env.DEV) {
+    console.error('Route error details:', {
+      message: error.message,
+      stack: error.stack
+    })
+  }
+  
+  // 生产环境重定向到首页
+  if (import.meta.env.PROD) {
+    router.push({ name: 'home' })
+  }
+})
+
+// 检查是否支持History API
+export const isHistorySupported = () => {
+  return !!(window.history && window.history.pushState)
+}
+
+// 安全的路由导航（带错误处理）
+export const safeNavigate = async (to, options = {}) => {
+  try {
+    await router.push(to)
+    return true
+  } catch (error) {
+    console.error('Navigation failed:', error)
+    
+    // 如果导航失败，根据选项决定是否回退
+    if (options.fallbackToHome) {
+      await router.push({ name: 'home' })
+    }
+    
+    return false
+  }
+}
+
+// 检查当前路由是否需要网络连接
+export const requiresNetwork = (routeName = null) => {
+  const currentRoute = routeName || router.currentRoute.value.name
+  
+  // 结果页可能需要网络获取推荐
+  return currentRoute === 'results'
+}
+
+// 预加载路由组件
+export const preloadRoute = async (routeName) => {
+  try {
+    const route = routes.find(r => r.name === routeName)
+    if (route && typeof route.component === 'function') {
+      await route.component()
+      console.log(`Route ${routeName} preloaded successfully`)
+    }
+  } catch (error) {
+    console.warn(`Failed to preload route ${routeName}:`, error)
+  }
 }
