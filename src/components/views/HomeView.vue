@@ -348,7 +348,7 @@ defineExpose({
     width: 150px;
     height: 150px;
     margin-bottom: 1rem;
-    transform: translateY(-20vh);
+    transform: translateY(-15vh);
   }
   
   @media (max-width: 767px) {
@@ -359,7 +359,7 @@ defineExpose({
     &.small {
       width: 120px;
       height: 120px;
-      transform: translateY(-25vh);
+      transform: translateY(-19vh);
     }
   }
   
@@ -370,7 +370,7 @@ defineExpose({
     &.small {
       width: 135px;
       height: 135px;
-      transform: translateY(-28vh);
+      transform: translateY(-17vh);
     }
   }
 }

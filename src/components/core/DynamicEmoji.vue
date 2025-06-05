@@ -91,7 +91,7 @@ const initRenderer = () => {
   emit('ready', renderer)
 }
 
-// 更新画布尺寸 - 增大表情尺寸
+// 更新画布尺寸
 const updateCanvasSize = () => {
   if (!canvasRef.value || !containerRef.value) return
   
@@ -99,10 +99,9 @@ const updateCanvasSize = () => {
   const canvas = canvasRef.value
   const rect = container.getBoundingClientRect()
   
-  // 增大表情尺寸：小尺寸时更大，普通尺寸时显著增大
   const size = props.isSmall 
-    ? Math.min(rect.width, rect.height, 200)  // 小尺寸从150增加到200
-    : Math.min(rect.width, rect.height, 800)  // 普通尺寸从300增加到450
+    ? Math.min(rect.width, rect.height, 200)
+    : Math.min(rect.width, rect.height, 800)
   
   canvas.width = size
   canvas.height = size
@@ -169,10 +168,10 @@ defineExpose({
     box-shadow: 0 6px 30px rgba(0, 0, 0, 0.15);
   }
   
-  // 小尺寸样式 - 增大尺寸
+  // 小尺寸样式
   &.small-size {
-    max-width: 200px;    // 从150px增加到200px
-    max-height: 200px;   // 从150px增加到200px
+    max-width: 200px;
+    max-height: 200px;
     
     &:hover {
       transform: scale(1.05);
@@ -180,39 +179,39 @@ defineExpose({
   }
 }
 
-// 响应式设计 - 全面增大尺寸
+// 响应式设计
 @media (max-width: 767px) {
   .emoji-canvas {
-    max-width: 280px;    // 从200px增加到280px
-    max-height: 280px;   // 从200px增加到280px
+    max-width: 280px;
+    max-height: 280px;
     
     &.small-size {
-      max-width: 140px;  // 从100px增加到140px
-      max-height: 140px; // 从100px增加到140px
+      max-width: 140px;
+      max-height: 140px;
     }
   }
 }
 
 @media (min-width: 768px) and (max-width: 1023px) {
   .emoji-canvas {
-    max-width: 350px;    // 从250px增加到350px
-    max-height: 350px;   // 从250px增加到350px
+    max-width: 350px;
+    max-height: 350px;
     
     &.small-size {
-      max-width: 170px;  // 从120px增加到170px
-      max-height: 170px; // 从120px增加到170px
+      max-width: 170px;
+      max-height: 170px;
     }
   }
 }
 
 @media (min-width: 1024px) {
   .emoji-canvas {
-    max-width: 450px;    // 从300px增加到450px
-    max-height: 450px;   // 从300px增加到450px
+    max-width: 450px;
+    max-height: 450px;
     
     &.small-size {
-      max-width: 200px;  // 从150px增加到200px
-      max-height: 200px; // 从150px增加到200px
+      max-width: 200px;
+      max-height: 200px;
     }
   }
 }
