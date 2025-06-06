@@ -122,21 +122,55 @@ npm run preview
 ```
 frontend/
 ├── src/                          # 源代码目录
-│   ├── components/               # Vue 组件
-│   │   ├── core/                # 核心业务组件：情绪输入、动态表情、音乐卡片等
-│   │   ├── layout/              # 布局组件：页面容器、头部、背景等
-│   │   └── views/               # 页面视图：首页、结果页等路由组件
-│   ├── composables/             # 组合式函数：动画控制器、音频播放器等可复用逻辑
-│   ├── stores/                  # Pinia 状态管理：全局状态如动画状态
-│   ├── router/                  # Vue Router：路由配置和导航逻辑
-│   └── assets/                  # 静态资源目录
-│       ├── styles/              # SCSS 样式：变量、混入、动画等
-│       └── scripts/             # 工具脚本：Canvas 渲染器等
-├── docs/                        # 项目文档：开发指南、部署指南等
-├── vite.config.js              # Vite 构建配置：路径别名、代理、优化等
-├── package.json                # 项目依赖和脚本定义
-├── start.js                    # 自动化启动脚本：环境检查、依赖安装
-└── .env.example                # 环境变量模板：API配置、功能开关等
+│   ├── components/               # Vue 组件目录
+│   │   ├── core/                # 核心业务组件
+│   │   │   ├── DynamicEmoji.vue # 动态表情组件：Canvas渲染情绪动画
+│   │   │   ├── EmotionInput.vue # 情绪输入组件：用户情绪文本输入
+│   │   │   ├── MusicCard.vue    # 音乐卡片组件：展示推荐音乐信息
+│   │   │   ├── ProgressLoader.vue # 进度加载组件：波形动画加载效果
+│   │   │   └── StaticEmoji.vue  # 静态表情组件：简单表情展示
+│   │   ├── layout/              # 布局组件
+│   │   │   ├── AppContainer.vue # 应用容器组件：主要布局容器
+│   │   │   ├── DynamicBackground.vue # 动态背景组件：渐变背景效果
+│   │   │   └── GradientHeader.vue # 渐变头部组件：页面顶部导航
+│   │   └── views/               # 页面视图组件
+│   │       ├── HomeView.vue     # 首页视图：情绪输入界面
+│   │       └── ResultsView.vue  # 结果页视图：音乐推荐展示
+│   ├── composables/             # 组合式函数（可复用逻辑）
+│   │   ├── useAnimationController.js # 动画控制器：GSAP动画管理
+│   │   └── useAudioPlayer.js    # 音频播放器：音乐播放控制
+│   ├── stores/                  # Pinia 状态管理
+│   │   └── animations.js        # 动画状态管理：全局动画状态
+│   ├── router/                  # Vue Router 路由配置
+│   │   └── index.js            # 路由配置文件：页面路由定义
+│   ├── assets/                  # 静态资源目录
+│   │   ├── styles/             # SCSS 样式文件
+│   │   │   ├── variables.scss  # 全局变量：颜色、尺寸、动画时长等
+│   │   │   ├── mixins.scss     # 样式混入：可复用的样式片段
+│   │   │   ├── animations.scss # 动画样式：CSS动画和过渡效果
+│   │   │   └── main.scss       # 主样式文件：全局样式和重置
+│   │   ├── scripts/            # 工具脚本
+│   │   │   └── canvasRenderer.js # Canvas渲染器：动态表情绘制逻辑
+│   │   └── logo.svg            # 项目Logo图标
+│   ├── main.js                 # 应用入口文件：Vue应用初始化
+│   └── App.vue                 # 根组件：应用根级别组件
+├── docs/                       # 项目文档目录
+│   ├── development.md          # 开发文档：环境配置、开发规范
+│   ├── deployment.md           # 部署文档：生产环境部署指南
+│   └── en-US/                  # 英文文档目录
+│       ├── README_EN.md        # 英文版README
+│       └── CONTRIBUTING_EN.md  # 英文版贡献指南
+├── .env.example               # 环境变量模板：API配置示例
+├── .eslintrc.cjs             # ESLint配置
+├── .prettierrc               # Prettier配置
+├── .gitignore                # Git忽略文件
+├── index.html                # HTML模板：应用入口页面
+├── vite.config.js            # Vite构建配置
+├── package.json              # 项目配置
+├── package-lock.json         # 依赖锁定文件
+├── start.js                  # 自动化启动脚本：环境检查、快速启动
+├── CONTRIBUTING.md           # 贡献指南：参与项目开发流程
+└── README.md                 # 项目说明：项目介绍和使用指南
 ```
 
 ### 核心文件路径

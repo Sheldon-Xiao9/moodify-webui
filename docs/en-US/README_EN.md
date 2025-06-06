@@ -16,7 +16,7 @@
   </p>
 
   <p>
-    <img src="https://img.shields.io/badge/License-MIT-blue" alt="License" />
+    <img src="https://img.shields.io/badge/License-MIT-yellow" alt="License" />
     <img src="https://img.shields.io/badge/Version-1.0.0-blue" alt="Version" />
   </p>
 
@@ -103,6 +103,13 @@ VITE_DEBUG=true
 VITE_APP_TITLE=Moodify
 ```
 
+### More Detailed Information
+
+For more detailed information about development and deployment, please check the following documentation:
+
+- **[Development Guide](../development.md)** - Complete development environment setup, debugging tips, development standards, etc.
+- **[Deployment Guide](../deployment.md)** - Production environment deployment guide, server configuration, operations management, etc.
+
 ## Core Features
 
 ### Emotion Recognition Interface
@@ -151,6 +158,8 @@ frontend/
 └── package.json          # Project dependencies
 ```
 
+You can find more detailed project structure explanations and directory responsibilities in the [Development Guide](../development.md).
+
 ## Development Guide
 
 Want to contribute code to the Moodify project? Please check our detailed development guide:
@@ -165,14 +174,19 @@ The development guide contains complete contribution workflows, code standards, 
 
 This project is open-sourced under the MIT License. The MIT License is a permissive open-source license that allows you to freely use, modify, and distribute the code of this project, whether for commercial or non-commercial purposes.
 
-**What You Can Do**
-Use this project's code to develop your own applications. Modify the code to meet your needs. Integrate the code into your commercial products. Redistribute the code (while retaining original license declarations).
+- **What You Can Do**
+  - Use this project's code to develop your own applications
+  - Modify the code to meet your needs
+  - Integrate the code into your commercial products
+  - Redistribute the code (while retaining original license declarations)
 
-**What You Need to Do**
-Retain original copyright declarations and license text in your project. If you distribute modified code, you need to clearly mark the modifications you made.
+- **What You Need to Do**
+  - Retain original copyright declarations and license text in your project
+  - If you distribute modified code, you need to clearly mark the modifications you made
 
-**Responsibilities We Don't Bear**
-This project is provided "as is" without any express or implied warranties. Authors are not responsible for any losses that may result from using this project.
+- **Responsibilities We Don't Bear**
+  - This project is provided "as is" without any express or implied warranties
+  - Authors are not responsible for any losses that may result from using this project
 
 For complete license text, please refer to the [LICENSE](LICENSE) file in the project root directory.
 
