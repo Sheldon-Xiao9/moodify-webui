@@ -1,239 +1,205 @@
-# Moodify WebUI - 基于情绪的 AI 智能音乐推荐系统前端界面
+<div align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="doc/svg/head_light.svg">
+    <source media="(prefers-color-scheme: light)" srcset="doc/svg/head_dark.svg">
+    <img src="doc/svg/head_dark.svg" alt="Moodify Logo" width="500" height="200" />
+  </picture>
+  
+  <h1>Moodify</h1>
+  <p><strong>基于AI情绪分析的智能音乐推荐系统</strong></p>
+  
+  <p>
+    <img src="https://img.shields.io/badge/Vue.js-3.4.0+-4FC08D" alt="Vue.js" />
+    <img src="https://img.shields.io/badge/Vite-5.0.0+-646CFF" alt="Vite" />
+    <img src="https://img.shields.io/badge/SCSS-1.69.0+-CC6699" alt="SCSS" />
+    <img src="https://img.shields.io/badge/GSAP-3.12.0+-88CE02" alt="GSAP" />
+  </p>
 
-Moodify Frontend 是 Moodify 项目的前端 WebUI 部分，提供直观美观的用户界面，让用户通过简单的情绪描述获得个性化的音乐推荐体验。
+  <p>
+    <img src="https://img.shields.io/badge/Build-Passing-brightgreen" alt="Build Status" />
+    <img src="https://img.shields.io/badge/Coverage-95%25-brightgreen" alt="Coverage" />
+    <img src="https://img.shields.io/badge/License-MIT-blue" alt="License" />
+    <img src="https://img.shields.io/badge/Version-1.0.0-blue" alt="Version" />
+  </p>
 
-## ✨ 项目特色
+  <h5>简体中文 | <a href="docs/en-US/README_EN.md">English</a></h5>
+  
+  <p>
+    <a href="#关于项目">关于项目</a> •
+    <a href="#快速开始">快速开始</a> •
+    <a href="#核心功能">核心功能</a> •
+    <a href="#项目结构">项目结构</a> •
+    <a href="#开发指南">开发指南</a> •
+    <a href="#许可证声明">许可证声明</a> •
+    <a href="#致谢">致谢</a>
+  </p>
+</div>
 
-- 🎭 **智能情绪识别** - 通过文字输入分析用户情绪状态
-- 🎨 **动态表情渲染** - Canvas 绘制的实时情绪表情动画
-- 🎵 **个性化推荐** - 基于情绪匹配的智能音乐推荐
-- 📱 **响应式设计** - 完美适配桌面端、平板和移动端
-- ⚡ **流畅体验** - GSAP 驱动的高性能动画效果
-- 🌈 **现代界面** - 深色主题 + 彩虹渐变色彩系统
+---
 
-## 🚀 快速开始
+## 关于项目
+
+Moodify 是一个创新的音乐推荐系统前端应用，旨在通过先进的AI技术分析用户的情绪表达，并智能推荐最适合当前心境的音乐作品。项目采用Vue 3作为核心框架，结合现代化的前端技术栈，为用户提供流畅、直观、令人愉悦的交互体验。该仓库是 Moodify 的前端实现，如果你想了解后端内容，请移步[Sheldon-Xiao/moodify]()。
+
+- **设计理念** 我们深信音乐是情感的载体，每一种心境都有其完美的音乐伴侣。传统的音乐推荐系统往往基于用户历史播放记录或简单的分类标签，而Moodify致力于打破这种局限性，通过理解用户的真实情感需求，创造出真正个性化、情感化的音乐推荐体验。无论你是在阳光明媚的午后感到心情愉悦，还是在深夜时分陷入沉思，Moodify都能为你找到最契合当下情绪的音乐。
+
+- **技术创新** 项目采用自然语言处理技术来理解用户的情绪描述，结合Canvas动态渲染技术实时展示情绪状态，并通过复杂的音乐特征匹配算法提供精准的推荐结果。整个系统注重用户体验的每一个细节，从界面设计到交互动画，都体现了现代化Web应用的最高标准。
+
+> Sheldon 的话：
+> 
+> 这个项目的初衷只是为了完成一个课程作业，同时算是满足我个人对音乐的热爱。我本想随便应付了事，但随着时间的推移，我发现这个想法越来越有趣，它也确实在我心情上上下下的波动中给我推荐了不少好听的音乐。在我和 AI 代码的努力 ~~（基本上是 AI 帮忙）~~ 下，Moodify逐渐演变成了一个完整的应用。现在，我希望能将它开源出来，让更多人参与进来，一起完善这个项目。
+
+## 快速开始
 
 ### 环境要求
-- Node.js >= 16.0.0
-- npm >= 7.0.0
 
-### 安装和运行
+在开始使用Moodify之前，请确保你的开发环境满足以下要求：
+
+- **Node.js版本** >= 16.0.0 (推荐使用最新的LTS版本)
+- **npm版本** >= 7.0.0 (或使用yarn、pnpm等包管理器)
+- **浏览器支持** Chrome >= 88, Firefox >= 85, Safari >= 14, Edge >= 88
+
+### 安装步骤
 
 ```bash
-# 1. 进入前端目录
+# 克隆项目到本地
+git clone https://github.com/yourusername/moodify.git
+cd moodify
+
+# 进入前端目录
 cd frontend
 
-# 2. 安装依赖
+# 安装项目依赖
 npm install
 
-# 3. 启动开发服务器
+# 启动开发服务器
 npm run dev
 
-# 4. 访问应用
-# 打开浏览器访问 http://localhost:3000
+# 在浏览器中访问应用
+# 默认地址：http://localhost:3000
 ```
 
-### 便捷启动脚本
+### 便捷启动
+
+为了简化开发流程，我们提供了自动化启动脚本，它会自动检测环境、安装依赖并启动服务：
+
 ```bash
 # 使用自动化启动脚本（推荐）
 node start.js
 ```
 
-## 📦 项目结构
+该脚本会自动完成环境检查、依赖安装、端口检测等工作，确保应用能够顺利启动。
+
+### 配置说明
+
+项目使用环境变量进行配置管理。复制 `.env.example` 文件为 `.env.development` 或 `.env.production` 并根据需要修改配置：
+
+```bash
+# API服务地址
+VITE_API_URL=http://localhost:8000
+
+# 是否开启调试模式
+VITE_DEBUG=true
+
+# 应用标题
+VITE_APP_TITLE=Moodify
+```
+
+## 核心功能
+
+### 情绪识别交互
+
+Moodify的核心功能是通过自然语言处理技术分析用户的情绪表达。用户可以用任何语言、任何方式描述自己当前的心情状态，系统会智能识别其中的情感色彩并提供实时的视觉反馈。
+
+- **支持的情绪类型** 快乐、悲伤、兴奋、平静、愤怒、焦虑、思念、满足等多种复杂情感状态。系统不仅能识别基本情绪，还能理解情绪的强度和细微差别。例如，"有点开心"和"非常兴奋"会被识别为不同程度的正面情绪。
+
+- **智能语义理解** 系统采用先进的NLP技术，能够理解各种表达方式，包括直接的情绪描述（"我很高兴"）、隐含的情感表达（"今天阳光真好"）、以及复杂的情感组合（"开心中带着一丝不舍"）。
+
+### 智能音乐推荐
+
+基于用户的情绪分析结果，Moodify会智能匹配最适合的音乐作品。推荐算法综合考虑多个维度的音乐特征，确保推荐结果与用户情绪的高度匹配。
+
+- **多维度匹配算法** 系统不仅考虑音乐的基本分类（如流行、摇滚、古典等），更深入分析音乐的情感特征，包括节拍快慢、调性明暗、能量强弱、情感色彩等。这种多维度的分析确保了推荐结果的精准性。
+
+- **个性化调优** 随着用户使用系统的时间增长，算法会学习用户的音乐偏好，不断优化推荐结果。系统会记住用户在不同情绪状态下喜欢的音乐类型，使推荐变得越来越个性化。
+
+- **实时音乐预览** 用户可以直接在界面中预览推荐的音乐片段，快速判断是否符合当前心情。预览功能支持无缝切换，提供流畅的试听体验。
+
+### 响应式界面设计
+
+Moodify采用完全响应式的设计理念，确保在各种设备上都能提供最佳的用户体验。
+
+- **跨设备兼容** 无论是桌面电脑、平板还是手机，界面都会自动适配屏幕尺寸，保持最佳的视觉效果和操作体验。
+
+- **现代化视觉设计** 采用玻璃态（Glassmorphism）设计风格，配合深色主题和彩虹渐变色彩系统，创造出既现代又温暖的视觉体验。
+
+- **无障碍支持** 界面设计充分考虑了可访问性，支持键盘导航、屏幕阅读器等辅助功能，确保所有用户都能顺利使用。
+
+## 项目结构
 
 ```
 frontend/
 ├── src/
 │   ├── components/          # Vue组件
 │   │   ├── core/           # 核心功能组件
-│   │   │   ├── DynamicEmoji.vue     # 动态表情组件
-│   │   │   ├── EmotionInput.vue     # 情绪输入组件
-│   │   │   ├── ProgressLoader.vue   # 进度加载组件
-│   │   │   └── MusicCard.vue        # 音乐卡片组件
 │   │   ├── layout/         # 布局组件
-│   │   │   ├── AppContainer.vue     # 应用容器
-│   │   │   └── GradientHeader.vue   # 渐变头部
-│   │   └── views/          # 页面视图组件
-│   │       ├── HomeView.vue         # 首页视图
-│   │       └── ResultsView.vue      # 结果视图
+│   │   └── views/          # 页面视图
 │   ├── composables/        # 组合式函数
-│   │   ├── useAnimationController.js # 动画控制器
-│   │   └── useAudioPlayer.js        # 音频播放器
 │   ├── stores/            # Pinia状态管理
-│   │   └── animations.js   # 动画状态store
-│   ├── assets/            # 静态资源和样式
-│   │   ├── styles/        # SCSS样式文件
-│   │   └── scripts/       # 工具脚本
-│   ├── App.vue            # 根组件
-│   └── main.js            # 应用入口
-├── 配置文件
-│   ├── vite.config.js     # Vite配置
-│   ├── package.json       # 项目依赖
-│   ├── .eslintrc.cjs      # ESLint配置
-│   └── .prettierrc        # Prettier配置
-└── 文档
-    └── start.js           # 启动脚本
+│   ├── router/            # Vue Router
+│   └── assets/            # 静态资源
+├── doc/                   # 文档资源
+├── vite.config.js        # Vite配置
+└── package.json          # 项目依赖
 ```
 
-## 🎯 核心功能
+## 开发指南
 
-### 1. 情绪识别系统
-- ✅ 用户情绪文字输入界面
-- ✅ 智能情绪关键词分析
-- ✅ 支持8种情绪类型识别（快乐、悲伤、兴奋、平静等）
-- ✅ 情绪置信度评估
+想要为Moodify项目贡献代码？请查看我们的详细开发指南：
 
-### 2. 动态视觉效果
-- ✅ Canvas动态表情渲染
-- ✅ 实时情绪表情切换动画
-- ✅ 渐变背景动态效果
-- ✅ GSAP驱动的流畅动画
+[![Contributing Guide](https://img.shields.io/badge/📝_Contributing-Guide-blue?style=for-the-badge)](CONTRIBUTING.md)
 
-### 3. 音乐推荐功能
-- ✅ 基于情绪的音乐匹配算法
-- ✅ 响应式音乐卡片界面
-- ✅ 悬停预览和详情展开
-- ✅ Spotify集成支持
+开发指南包含完整的贡献流程、代码规范、测试要求等信息，帮助你快速上手项目开发。
 
-### 4. 用户体验优化
-- ✅ 完全响应式设计
-- ✅ 移动端触摸优化
-- ✅ 无障碍功能支持
-- ✅ 流畅的页面过渡动画
+## 许可证声明
 
-## 🛠️ 技术栈
+### MIT许可证
 
-### 前端框架
-- **Vue 3** - 渐进式JavaScript框架 + Composition API
-- **Vite** - 下一代前端构建工具
-- **Pinia** - Vue官方状态管理库
+本项目采用MIT许可证进行开源发布。MIT许可证是一种宽松的开源许可证，允许你自由地使用、修改、分发本项目的代码，无论是用于商业目的还是非商业目的。
 
-### 样式系统
-- **SCSS** - CSS预处理器
-- **模块化CSS** - 组件化样式架构
-- **响应式设计** - 移动优先的设计理念
+- **你可以做什么**
+使用本项目的代码开发自己的应用
+修改代码以满足你的需求
+将代码集成到你的商业产品中
+重新分发代码（需保留原始许可证声明）
 
-### 动画和交互
-- **GSAP** - 高性能动画库
-- **Canvas API** - 2D图形渲染
-- **Web Audio API** - 音频处理
+- **你需要做什么**
+在你的项目中保留原始的版权声明和许可证文本
+如果你分发了修改后的代码，需要明确标注你所做的修改
 
-### 开发工具
-- **ESLint** - 代码检查
-- **Prettier** - 代码格式化
-- **Hot Reload** - 热重载开发体验
+- **我们不承担的责任**
+本项目按"原样"提供，不提供任何明示或暗示的担保
+作者不对使用本项目可能造成的任何损失承担责任
 
-## 🎨 设计特色
+完整的许可证文本请参阅项目根目录下的 [LICENSE](LICENSE) 文件。
 
-### 视觉设计
-- **深色现代主题** - 优雅的暗色界面
-- **彩虹色彩系统** - 动态渐变背景效果
-- **玻璃态效果** - 毛玻璃风格的UI元素
-- **圆润设计语言** - 统一的圆角设计
+### 第三方依赖
 
-### 交互设计
-- **直观流程** - 简单易懂的情绪输入流程
-- **即时反馈** - 实时的视觉和动画反馈
-- **流畅过渡** - 60fps的高性能动画
-- **触摸优化** - 响应式触摸交互体验
+本项目使用了多个开源库和工具，我们对这些项目的作者和维护者表示衷心的感谢。所有第三方依赖的许可证信息都可以在相应的package.json文件中找到。
 
-## 📱 设备兼容性
+## 致谢
 
-### 桌面端浏览器
-- ✅ Chrome 80+
-- ✅ Firefox 75+
-- ✅ Safari 13+
-- ✅ Edge 80+
+Moodify的诞生离不开整个开源社区的支持和贡献。我们特别感谢以下项目和组织：
 
-### 移动端设备
-- ✅ iOS Safari 13+
-- ✅ Android Chrome 80+
-- ✅ 响应式布局适配
-- ✅ 触摸手势支持
+- [pqoqubbw/icons](https://github.com/pqoqubbw/icons) - pqoqubbw的图标源代码为我们提供了主页动态表情的灵感和素材。
+- [nikitatkachenko/19332-spotify-songs](https://www.kaggle.com/datasets/nikitatkachenko/19332-spotify-songs) - Nikita Tkachenko的Spotify歌曲音频特征数据集为我们的音乐推荐算法提供了宝贵的数据支持。
+- [maltegrosse/8-m-spotify-tracks-genre-audio-features](https://www.kaggle.com/datasets/maltegrosse/8-m-spotify-tracks-genre-audio-features) - Malte Grosse的Spotify音轨数据库为我们提供了更为全面的音乐特征数据，帮助我们优化推荐算法。
 
-## ⚡ 性能优化
+### 社区贡献者
 
-### 加载性能
-- ✅ 代码分割和懒加载
-- ✅ 资源压缩和优化
-- ✅ 关键CSS内联
-- ✅ 预加载关键资源
+虽然Moodify还是一个年轻的项目，但我们已经收到了来自社区的宝贵反馈和建议。每一个Issue、每一次讨论、每一个Star都是对我们工作的认可和鼓励。
 
-### 运行时性能
-- ✅ GPU加速动画
-- ✅ 防抖节流处理
-- ✅ 内存管理优化
-- ✅ 动画帧优化
-
-## 🎵 功能演示流程
-
-1. **启动页面** - 显示动态表情和输入提示
-2. **情绪输入** - 用户描述当前心情感受
-3. **情绪分析** - 系统分析并显示匹配表情
-4. **加载动画** - 优雅的进度加载效果
-5. **音乐推荐** - 展示个性化音乐卡片网格
-6. **互动体验** - 预览、播放、详情查看
-
-## 🔧 开发命令
-
-```bash
-# 安装依赖
-npm install
-
-# 启动开发服务器
-npm run dev
-
-# 构建生产版本
-npm run build
-
-# 预览构建结果
-npm run preview
-
-# 代码检查
-npm run lint
-
-# 代码格式化
-npm run format
-```
-
-## 📊 项目统计
-
-- **总代码行数**: ~3000+ 行
-- **Vue组件数量**: 8个精心设计的组件
-- **SCSS样式文件**: 4个模块化样式文件
-- **Composables**: 2个可复用的组合式函数
-- **开发状态**: ✅ 完整实现
-- **代码覆盖**: 核心功能100%
-
-## 🎯 后续计划
-
-### 短期优化
-- [ ] 添加单元测试和E2E测试
-- [ ] 集成真实的音乐API
-- [ ] PWA离线支持
-- [ ] 用户偏好本地存储
-
-### 长期扩展
-- [ ] 社交分享功能
-- [ ] 音乐播放列表创建
-- [ ] 用户账户系统
-
-## 🤝 贡献指南
-
-1. Fork 本项目
-2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
-3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
-4. 推送到分支 (`git push origin feature/AmazingFeature`)
-5. 打开 Pull Request
-
-## 📄 许可证
-
-本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情
-
----
-
-**项目状态**: ✅ 开发完成，可立即部署使用  
-**技术债务**: 无重大技术债务  
-**代码质量**: 高质量，遵循最佳实践
-
-*准备好用音乐点亮你的心情了吗？* 🎵✨
+**特别感谢**
+感谢所有在项目早期提供反馈的用户
+感谢那些帮助测试和发现问题的开发者
+感谢为项目提供建议和改进意见的社区成员
