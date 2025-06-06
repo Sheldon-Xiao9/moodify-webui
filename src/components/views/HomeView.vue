@@ -56,7 +56,7 @@ import { useAnimationStore } from '@/stores/animations'
 import DynamicEmoji from '@/components/core/DynamicEmoji.vue'
 import EmotionInput from '@/components/core/EmotionInput.vue'
 import ProgressLoader from '@/components/core/ProgressLoader.vue'
-import DynamicBackground from '@/components/core/DynamicBackground.vue'
+import DynamicBackground from '@/components/layout/DynamicBackground.vue'
 
 // 注入App.vue提供的数据和方法
 const appData = inject('appData', {})

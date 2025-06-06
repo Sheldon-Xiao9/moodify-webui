@@ -187,7 +187,7 @@ import { ref, computed, onMounted, onUnmounted, watch, nextTick, inject } from '
 import { useAnimationStore } from '@/stores/animations'
 import { useAudioPlayer } from '@/composables/useAudioPlayer'
 import MusicCard from '@/components/core/MusicCard.vue'
-import DynamicBackground from '@/components/core/DynamicBackground.vue'
+import DynamicBackground from '@/components/layout/DynamicBackground.vue'
 import StaticEmoji from '@/components/core/StaticEmoji.vue'
 
 // 注入App.vue提供的数据和方法
