@@ -16,8 +16,6 @@
   </p>
 
   <p>
-    <img src="https://img.shields.io/badge/Build-Passing-brightgreen" alt="Build Status" />
-    <img src="https://img.shields.io/badge/Coverage-95%25-brightgreen" alt="Coverage" />
     <img src="https://img.shields.io/badge/License-MIT-blue" alt="License" />
     <img src="https://img.shields.io/badge/Version-1.0.0-blue" alt="Version" />
   </p>
