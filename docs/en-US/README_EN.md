@@ -1,8 +1,8 @@
 <div align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="../../doc/svg/head_light.svg">
-    <source media="(prefers-color-scheme: light)" srcset="../../doc/svg/head_dark.svg">
-    <img src="../../doc/svg/head_dark.svg" alt="Moodify Logo" width="500" height="200" />
+    <source media="(prefers-color-scheme: dark)" srcset="../../docs/svg/head_light.svg">
+    <source media="(prefers-color-scheme: light)" srcset="../../docs/svg/head_dark.svg">
+    <img src="../../docs/svg/head_dark.svg" alt="Moodify Logo" width="500" height="200" />
   </picture>
   
   <h1>Moodify</h1>
