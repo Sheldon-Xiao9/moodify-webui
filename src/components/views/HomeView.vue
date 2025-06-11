@@ -60,7 +60,15 @@ import ProgressLoader from '@/components/core/ProgressLoader.vue'
 import DynamicBackground from '@/components/layout/DynamicBackground.vue'
 
 // 注入App.vue提供的数据和方法
-const appData = inject('appData', {})
+const appData = inject('appData', {
+  // Provide default empty functions for safety, though they should always be provided by App.vue
+  handleUserInputChange: () => console.warn('handleUserInputChange not provided'),
+  handleHomeViewResults: () => console.warn('handleHomeViewResults not provided'),
+  handleHomeViewError: () => console.warn('handleHomeViewError not provided'),
+  handleProcessingComplete: () => console.warn('handleProcessingComplete not provided'),
+  // Keep other existing defaults if any, or add them
+  isTestMode: false 
+})
 
 const store = useAnimationStore()
 
@@ -123,14 +131,13 @@ const handleEmotionSubmit = async (emotionText) => {
   
   console.log('Emotion submitted:', emotionText)
   
-  // 调用App.vue提供的方法
-  if (appData.handleEmotionSubmitted) {
-    appData.handleEmotionSubmitted({
-      text: emotionText
-    })
+  // 调用 App.vue 提供的方法
+  if (appData.handleUserInputChange) {
+    appData.handleUserInputChange(emotionText);
   }
   
   // 启动AI分析处理（后台进行）
+  await nextTick()
   processEmotionWithAI(emotionText)
 }
 
@@ -186,8 +193,37 @@ const processEmotionWithAI = async (emotionText) => {
     if (isTestMode.value) {
       // 测试模式：使用模拟的AI分析
       console.log('Running in test mode - using mock AI analysis')
-      const mockAIResult = await mockAIAnalysis(emotionText)
-      aiEmotionResult.value = mockAIResult.emotion
+      const mockAIResult = await mockAIAnalysis(emotionText); // This is the primary mockAIAnalysis call
+      aiEmotionResult.value = mockAIResult.emotion;
+
+      // Simulate progress steps for test mode
+      const progressLoader = progressRef.value;
+      if (progressLoader) {
+        progressLoader.setProgress(5);
+        progressLoader.jumpToStage(0);
+        // Simulate some delay for different stages
+        await new Promise(resolve => setTimeout(resolve, 500));
+        progressLoader.setProgress(40);
+        progressLoader.jumpToStage(1);
+        await new Promise(resolve => setTimeout(resolve, 500));
+        progressLoader.setProgress(85);
+        progressLoader.jumpToStage(2);
+      }
+      
+      // Pass mock results to App.vue
+      if (appData.handleHomeViewResults) {
+        appData.handleHomeViewResults({
+          emotion: mockAIResult.emotion,
+          analysis: generateMockAiAnalysisForApp(mockAIResult.emotion), // Helper for mock analysis text
+          tracks: generateMockTracksForApp(mockAIResult.emotion),       // Helper for mock tracks
+          total: (generateMockTracksForApp(mockAIResult.emotion)).length,
+          userInput: emotionText
+        });
+      }
+      
+      if (progressLoader) {
+        setTimeout(() => progressLoader.completeProgress(), 500); // Complete progress bar
+      }
     } else {
       // 生产模式：实际的后端调用逻辑
       console.log('Running in production mode - calling real backend APIs')
@@ -201,7 +237,7 @@ const processEmotionWithAI = async (emotionText) => {
       }
       
       // 调用情绪分析API
-      const emotionResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/emotion/analyze-emotion`, {
+      const emotionResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/analyze-emotion`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -246,42 +282,61 @@ const processEmotionWithAI = async (emotionText) => {
         progressLoader.jumpToStage(2)
       }
       
-      // 将推荐结果存储起来，供后续使用
-      if (appData.handleRecommendationResult) {
-        appData.handleRecommendationResult({
+      // 将结果传输到 App.vue
+      if (appData.handleHomeViewResults) {
+        appData.handleHomeViewResults({
           emotion: emotionData.emotion,
           analysis: emotionData.analysis,
           tracks: recommendData.tracks,
-          total: recommendData.total
-        })
+          total: recommendData.total,
+          userInput: emotionText
+        });
       }
       
-      // 完成处理
-      setTimeout(() => {
-        if (progressLoader) {
-          progressLoader.completeProgress()
-        }
-      }, 500)
-    }
+      // 完成处理 - ProgressLoader will emit 'complete' which HomeView handles
+      // HomeView's handleProcessComplete will then call App.vue's handleProcessingComplete
+      // Ensure progressLoader completes its animation
+      if (progressLoader) {
+         setTimeout(() => progressLoader.completeProgress(), 500) // Give a slight delay for UI
+      }
+    } // This closes the 'else' (production mode) block.
+    // The 'else if (isTestMode.value)' block that was here is now removed as its logic is integrated into the primary 'if (isTestMode.value)' block.
     
   } catch (error) {
-    console.error('处理失败:', error)
-    
-    // 错误处理：设置进度条完成并使用默认值
+    console.error('HomeView.vue - 处理失败:', error)
     const progressLoader = progressRef.value
-    if (progressLoader && !isTestMode.value) {
-      progressLoader.setProgress(100)
-      progressLoader.completeProgress()
+    
+    // Notify App.vue of the error
+    if (appData.handleHomeViewError) {
+      appData.handleHomeViewError(error.message || '情绪处理或音乐推荐时发生未知错误');
+    }
+
+    // Still complete the progress bar animation to unblock UI, App.vue will handle error display
+    if (progressLoader) {
+        progressLoader.completeProgress() // Or a specific error state if ProgressLoader supports it
     }
     
-    aiEmotionResult.value = isTestMode.value ? '快乐' : '中性'
-    
-    // 通知用户发生了错误
-    if (appData.handleProcessingError) {
-      appData.handleProcessingError(error.message)
-    }
+    // aiEmotionResult.value = isTestMode.value ? '快乐' : '中性' // App.vue will handle fallback
   }
 }
+
+// Helper for test mode in HomeView, if App.vue's generateMockTracks is not directly accessible
+// Or, ensure generateMockTracks is passed via appData if needed by HomeView's test path
+const generateMockTracksForApp = (emotion) => {
+  // This is a simplified version. Ideally, use the one from App.vue or pass it.
+  const mockEmotionData = { aiResult: emotion, mood: emotion.toLowerCase() };
+  // Basic mock tracks structure
+  return [
+    { name: `${emotion} Track 1`, artist: 'Test Artist', genre: 'Test Genre', id:'mock1' },
+    { name: `${emotion} Track 2`, artist: 'Test Artist', genre: 'Test Genre', id:'mock2' },
+  ];
+};
+
+const generateMockAiAnalysisForApp = (emotion) => {
+    // Simplified version
+    return `这是关于"${emotion}"情绪的模拟AI分析文本。`;
+};
+
 
 // 模拟AI分析的测试函数
 const mockAIAnalysis = async (text) => {

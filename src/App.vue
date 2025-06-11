@@ -47,6 +47,7 @@ const currentEmotion = ref(null)
 const aiEmotionResult = ref('')
 const userInputText = ref('')
 const extendedAiAnalysis = ref('')
+const homeViewApiResults = ref(null);
 
 // 测试模式检测
 const isTestMode = ref(import.meta.env.DEV || !import.meta.env.VITE_API_BASE_URL)
@@ -92,143 +93,90 @@ const initializeApp = async () => {
   }
 }
 
-// 处理情绪提交
-const handleEmotionSubmitted = async (emotionData) => {
-  console.log('Emotion submitted:', emotionData)
-  currentEmotion.value = emotionData
-  userInputText.value = emotionData.text || ''
-  
-  // 提交后立即开始生成音乐推荐数据
-  try {
-    await fetchMusicRecommendations(emotionData)
-  } catch (error) {
-    console.error('Failed to fetch recommendations:', error)
-    showError('获取音乐推荐失败，请重试')
-    
-    // 重置到首页
+// 当用户提交输入时由 HomeView 调用
+const handleUserInputChange = (text) => {
+  console.log('App.vue: User input text received:', text);
+  userInputText.value = text;
+  currentEmotion.value = { text: text };
+  musicTracks.value = [];
+  extendedAiAnalysis.value = '';
+  aiEmotionResult.value = ''; 
+  homeViewApiResults.value = null;
+  hasError.value = false;
+  isLoadingTracks.value = true; 
+};
+
+// 当 HomeView 完成 API 调用并返回结果时由 HomeView 调用
+const handleHomeViewResults = (results) => {
+  console.log('App.vue: Results received from HomeView:', results);
+  musicTracks.value = results.tracks || [];
+  extendedAiAnalysis.value = results.analysis || ''; 
+  aiEmotionResult.value = results.emotion || '';   
+  userInputText.value = results.userInput || userInputText.value; 
+  homeViewApiResults.value = results; 
+  isLoadingTracks.value = false; 
+  hasError.value = false; 
+};
+
+// 当 HomeView 发生错误时由 HomeView 调用
+const handleHomeViewError = (message) => {
+  console.error('App.vue: Error reported from HomeView:', message);
+  showError(message || '处理过程中发生错误，请重试');
+  isLoadingTracks.value = false;
+  hasError.value = true; 
+  musicTracks.value = []; 
+  extendedAiAnalysis.value = '';
+  setTimeout(() => {
+     if (route.name !== 'home' && hasError.value) { 
+         handleBack();
+     }
+  }, 5000); 
+};
+
+// 处理处理完成信号（由 HomeView 调用）
+const handleProcessingComplete = () => {
+  console.log('App.vue: Processing complete signal received.');
+
+  if (hasError.value) {
+    console.log('App.vue: Error flag is set, not navigating to results.');
+    return; 
+  }
+
+  if (!homeViewApiResults.value && musicTracks.value.length === 0 && !isTestMode.value) {
+    console.warn('App.vue: No recommendation data available at processing complete for non-test mode.');
+    showError('未能获取推荐结果数据，请重试。');
     setTimeout(() => {
-      handleBack()
-    }, 3000)
-  }
-}
-
-// 处理处理完成
-const handleProcessingComplete = (data) => {
-  console.log('Processing complete:', data)
-  
-  // 设置AI分析结果
-  aiEmotionResult.value = data.aiResult || '快乐'
-  userInputText.value = data.emotion || userInputText.value
-  
-  // 生成AI分析说明，使用正确的情绪结果
-  if (isTestMode.value) {
-    extendedAiAnalysis.value = generateMockAiAnalysis(data.aiResult || '快乐')
+        if (route.name !== 'home') handleBack();
+    }, 5000);
+    return;
   }
   
-  // 确保有音乐数据再切换视图
-  if (musicTracks.value.length === 0) {
-    console.log('No tracks available, generating mock data...')
-    // 如果没有音乐数据，生成默认数据
-    const mockData = {
-      text: data.emotion || '快乐',
-      mood: data.mood || 'happy',
-      aiResult: data.aiResult || '快乐'
-    }
-    musicTracks.value = generateMockTracks(mockData)
+  if (isTestMode.value && !homeViewApiResults.value && musicTracks.value.length > 0) {
+      console.log('App.vue: Test mode proceeding with locally generated mock tracks.');
+      if (!aiEmotionResult.value) aiEmotionResult.value = '快乐'; 
+      if (!extendedAiAnalysis.value) extendedAiAnalysis.value = generateMockAiAnalysis(aiEmotionResult.value);
+      if (!userInputText.value && currentEmotion.value) userInputText.value = currentEmotion.value.text;
+  } else if (!homeViewApiResults.value && !isTestMode.value) {
+      console.error("App.vue: Critical - No results and not in test mode, but error not caught earlier.");
+      showError('发生意外错误，无法展示结果。');
+      setTimeout(() => {
+        if (route.name !== 'home') handleBack();
+      }, 5000);
+      return;
   }
   
-  // 等待数据确认后再导航
   nextTick(() => {
-    // 保存数据到sessionStorage并导航到结果页
     sessionStorage.setItem('moodify_emotion_data', JSON.stringify({
-      emotion: data.emotion,
-      aiResult: data.aiResult,
+      emotion: userInputText.value,       
+      aiResult: aiEmotionResult.value,    
       tracks: musicTracks.value,
-      analysis: extendedAiAnalysis.value
-    }))
+      analysis: extendedAiAnalysis.value  
+    }));
     
-    // 导航到结果页
-    router.push({ name: 'results' })
-    
-    console.log('Navigated to results view with tracks:', musicTracks.value.length)
-    console.log('AI result:', aiEmotionResult.value, 'User input:', userInputText.value)
-    console.log('Extended AI analysis:', extendedAiAnalysis.value)
-  })
-}
-
-// 获取音乐推荐
-const fetchMusicRecommendations = async (emotionData) => {
-  isLoadingTracks.value = true
-  hasError.value = false
-  
-  try {
-    if (isTestMode.value) {
-      // 测试模式：使用模拟数据
-      await simulateMusicAPI(emotionData)
-    } else {
-      // 生产模式：调用真实API
-      await fetchFromRealAPI(emotionData)
-    }
-    
-    console.log('Music recommendations fetched successfully:', musicTracks.value.length, 'tracks')
-  } catch (error) {
-    hasError.value = true
-    errorMessage.value = error.message || '获取推荐失败'
-    console.error('Music API error:', error)
-    throw error
-  } finally {
-    isLoadingTracks.value = false
-  }
-}
-
-// 调用真实API
-const fetchFromRealAPI = async (emotionData) => {
-  try {
-    // 实际的API调用逻辑
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/recommendations`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${import.meta.env.VITE_API_TOKEN || ''}`
-      },
-      body: JSON.stringify({
-        emotion: emotionData.text,
-        mood: emotionData.mood,
-        aiResult: emotionData.aiResult
-      })
-    })
-    
-    if (!response.ok) {
-      throw new Error(`API Error: ${response.status} ${response.statusText}`)
-    }
-    
-    const data = await response.json()
-    
-    // 设置API返回的数据
-    musicTracks.value = data.tracks || []
-    extendedAiAnalysis.value = data.aiAnalysis || '' // 从API获取AI分析
-    
-    console.log('Real API response:', data)
-  } catch (error) {
-    console.error('Real API call failed:', error)
-    throw new Error('无法连接到推荐服务，请稍后重试')
-  }
-}
-
-// 模拟音乐API调用（仅测试模式使用）
-const simulateMusicAPI = async (emotionData) => {
-  // 模拟网络延迟（在进度条运行期间完成）
-  await new Promise(resolve => setTimeout(resolve, 1500))
-  
-  // 根据情绪生成模拟数据
-  const mockTracks = generateMockTracks(emotionData)
-  musicTracks.value = mockTracks
-  
-  console.log('Generated mock tracks:', mockTracks.length)
-  
-  // 注意：不在这里生成AI分析，而是在handleProcessingComplete中生成
-  // 这样可以确保使用正确的AI识别结果
-}
+    router.push({ name: 'results' });
+    console.log('App.vue: Navigated to results view.');
+  });
+};
 
 // 生成模拟AI分析（仅测试模式使用）
 const generateMockAiAnalysis = (emotion) => {
@@ -243,71 +191,47 @@ const generateMockAiAnalysis = (emotion) => {
   return mockAnalysisTemplates[emotion] || mockAnalysisTemplates['快乐']
 }
 
-// 生成模拟音乐数据（仅测试模式使用）
-const generateMockTracks = (emotionData) => {
+// 生成模拟音乐数据（仅测试模式使用, 如果没有从 HomeView 获取到数据时）)
+const generateMockTracks = (emotionData) => { // emotionData 应为 { text: '...', mood: '...', aiResult: '...' }
   const mood = emotionData.aiResult || emotionData.mood || 'happy'
   const emotionText = emotionData.text || ''
   
-  console.log('Generating tracks for mood:', mood, 'emotion:', emotionText)
+  console.log('App.vue: Generating mock tracks for mood:', mood, 'emotion:', emotionText)
   
-  // 基础模板
   const trackTemplates = {
     '快乐': [
       { name: 'Sunshine Melody', artist: 'Happy Vibes', genre: 'Pop', emotions: ['happy', 'energetic'] },
       { name: 'Dancing in Light', artist: 'Joy Collective', genre: 'Electronic', emotions: ['happy', 'excited'] },
-      { name: 'Bright Days Ahead', artist: 'Optimist Band', genre: 'Indie', emotions: ['happy', 'peaceful'] },
-      { name: 'Golden Hour', artist: 'Cheerful Sounds', genre: 'Folk', emotions: ['happy', 'calm'] },
-      { name: 'Celebration Time', artist: 'Party Makers', genre: 'Dance', emotions: ['happy', 'energetic'] },
-      { name: 'Feel Good Vibes', artist: 'Good Mood Collective', genre: 'Pop', emotions: ['happy', 'uplifting'] }
     ],
     '悲伤': [
       { name: 'Rainy Reflections', artist: 'Melancholy Soul', genre: 'Indie Folk', emotions: ['sad', 'melancholy'] },
       { name: 'Tears in Time', artist: 'Emotional Depth', genre: 'Alternative', emotions: ['sad', 'emotional'] },
-      { name: 'Silent Sorrow', artist: 'Deep Feelings', genre: 'Ambient', emotions: ['sad', 'peaceful'] },
-      { name: 'Empty Rooms', artist: 'Lonely Hearts', genre: 'Indie', emotions: ['sad', 'lonely'] },
-      { name: 'Fading Memories', artist: 'Nostalgic Echoes', genre: 'Singer-Songwriter', emotions: ['sad', 'nostalgic'] },
-      { name: 'Heavy Heart', artist: 'Emotional Journey', genre: 'Alternative Rock', emotions: ['sad', 'heavy'] }
     ],
     '愤怒': [
       { name: 'Burning Rage', artist: 'Fury Band', genre: 'Metal', emotions: ['angry', 'intense'] },
       { name: 'Break the Chains', artist: 'Rebellion', genre: 'Rock', emotions: ['angry', 'powerful'] },
-      { name: 'Storm Inside', artist: 'Tempest', genre: 'Hard Rock', emotions: ['angry', 'aggressive'] },
-      { name: 'Fight Back', artist: 'Resistance', genre: 'Punk', emotions: ['angry', 'defiant'] },
-      { name: 'Inner Fire', artist: 'Flame Throwers', genre: 'Alternative Metal', emotions: ['angry', 'fierce'] },
-      { name: 'Shattered Glass', artist: 'Broken Silence', genre: 'Industrial', emotions: ['angry', 'destructive'] }
     ],
     '兴奋': [
       { name: 'Electric Energy', artist: 'High Voltage', genre: 'Electronic', emotions: ['excited', 'energetic'] },
       { name: 'Pump It Up', artist: 'Energy Boost', genre: 'Dance', emotions: ['excited', 'pumped'] },
-      { name: 'Adrenaline Rush', artist: 'Excitement Inc', genre: 'EDM', emotions: ['excited', 'intense'] },
-      { name: 'Sky High', artist: 'Elevation', genre: 'Trance', emotions: ['excited', 'euphoric'] },
-      { name: 'Maximum Drive', artist: 'Turbo Charge', genre: 'Electronic Rock', emotions: ['excited', 'powerful'] },
-      { name: 'Velocity', artist: 'Speed Demons', genre: 'Drum & Bass', emotions: ['excited', 'fast'] }
     ],
     '烦躁': [
       { name: 'Restless Mind', artist: 'Anxiety Collective', genre: 'Alternative', emotions: ['annoyed', 'restless'] },
       { name: 'Frustration', artist: 'Tension Relief', genre: 'Post-Rock', emotions: ['annoyed', 'tense'] },
-      { name: 'Irritation', artist: 'Stressed Out', genre: 'Indie Rock', emotions: ['annoyed', 'irritated'] },
-      { name: 'Edge of Patience', artist: 'Breaking Point', genre: 'Grunge', emotions: ['annoyed', 'edgy'] },
-      { name: 'Noise in Head', artist: 'Mental Static', genre: 'Experimental', emotions: ['annoyed', 'chaotic'] },
-      { name: 'Overwhelmed', artist: 'Pressure Cooker', genre: 'Math Rock', emotions: ['annoyed', 'complex'] }
     ]
   }
-  
-  // 默认使用快乐模板
   const templates = trackTemplates[mood] || trackTemplates['快乐']
-  
   return templates.map((template, index) => ({
-    id: `track_${mood}_${index + 1}`,
+    id: `mock_track_${mood}_${index + 1}`,
     name: template.name,
     artist: template.artist,
     albumName: `${template.genre} Collection`,
     albumCover: `https://picsum.photos/300/300?random=${mood}_${index + 1}`,
-    duration: 180 + Math.floor(Math.random() * 120), // 3-5分钟
+    duration: 180 + Math.floor(Math.random() * 120), 
     previewUrl: `https://example.com/preview_${mood}_${index}.mp3`,
     spotifyUrl: `https://open.spotify.com/track/example_${mood}_${index}`,
     emotions: template.emotions,
-    popularity: 60 + Math.floor(Math.random() * 40), // 60-100
+    popularity: 60 + Math.floor(Math.random() * 40), 
     releaseDate: `2023-${String(Math.floor(Math.random() * 12) + 1).padStart(2, '0')}-${String(Math.floor(Math.random() * 28) + 1).padStart(2, '0')}`,
     genre: template.genre
   }))
@@ -315,47 +239,58 @@ const generateMockTracks = (emotionData) => {
 
 // 处理刷新
 const handleRefresh = async () => {
-  if (!currentEmotion.value) return
+  console.warn("App.vue: handleRefresh called. This function's logic is outdated and needs to be updated for the new HomeView-centric API flow.");
+  showError('刷新功能当前不可用，请返回主页重试。');
+  // 原始逻辑（现在已不可用）：
+  // if (!currentEmotion.value || !userInputText.value) { // Check userInputText as currentEmotion might be just {text: ...}
+  //   console.log('App.vue: No current emotion/input to refresh.');
+  //   // Optionally navigate back or show a more specific error
+  //   // handleBack(); 
+  //   return;
+  // }
   
-  try {
-    await fetchMusicRecommendations(currentEmotion.value)
-  } catch (error) {
-    showError('刷新失败，请稍后重试')
-  }
+  // try {
+  //   // This implies fetchMusicRecommendations is still defined and works, which is not the case with the new flow.
+  //   // We need to re-trigger the process from HomeView if a refresh is desired.
+  //   // For now, this function is disabled.
+  //   // await fetchMusicRecommendations(currentEmotion.value); // currentEmotion.value needs to be the full object for this old call
+  // } catch (error) {
+  //   showError('刷新失败，请稍后重试');
+  // }
 }
 
 // 处理返回
 const handleBack = () => {
-  // 清除sessionStorage数据
   sessionStorage.removeItem('moodify_emotion_data')
-  
-  // 重置数据
   musicTracks.value = []
   currentEmotion.value = null
   aiEmotionResult.value = ''
   userInputText.value = ''
   extendedAiAnalysis.value = ''
+  homeViewApiResults.value = null;
   hasError.value = false
   isLoadingTracks.value = false
-  
-  // 导航回首页
+  store.resetState();
   router.push({ name: 'home' })
-  
-  console.log('Returned to home view')
+  console.log('App.vue: Returned to home view, state reset.')
 }
 
 // 处理重试
 const handleRetry = async () => {
-  if (!currentEmotion.value) {
-    handleBack()
-    return
-  }
+  console.warn("App.vue: handleRetry called. This function's logic is outdated and needs to be updated.");
+  showError('重试功能当前不可用，请返回主页重新开始。');
+  // 原始逻辑（现在已不可用）：
+  // if (!currentEmotion.value || !userInputText.value) {
+  //   handleBack();
+  //   return;
+  // }
   
-  try {
-    await fetchMusicRecommendations(currentEmotion.value)
-  } catch (error) {
-    showError('重试失败，请检查网络连接')
-  }
+  // try {
+  //   // This implies fetchMusicRecommendations is still defined and works, which is not the case with the new flow.
+  //   // await fetchMusicRecommendations(currentEmotion.value);
+  // } catch (error) {
+  //   showError('重试失败，请检查网络连接');
+  // }
 }
 
 // 处理卡片操作
@@ -379,8 +314,6 @@ const handleCardPause = (track) => {
 const showError = (message) => {
   toastMessage.value = message
   showErrorToast.value = true
-  
-  // 自动隐藏
   setTimeout(() => {
     hideErrorToast()
   }, 5000)
@@ -398,7 +331,6 @@ const handleGlobalError = (event) => {
 
 // 页面卸载前处理
 const handleBeforeUnload = (event) => {
-  // 如果有正在进行的操作，提醒用户
   if (isLoadingTracks.value) {
     event.preventDefault()
     event.returnValue = '正在处理中，确定要离开吗？'
@@ -407,14 +339,14 @@ const handleBeforeUnload = (event) => {
 
 // 键盘事件处理
 const handleKeyPress = (event) => {
-  // ESC键返回
   if (event.key === 'Escape' && route.name === 'results') {
     handleBack()
   }
-  
-  // Enter键重试（在错误状态下）
-  if (event.key === 'Enter' && hasError.value) {
-    handleRetry()
+  if (event.key === 'Enter' && hasError.value && route.name !== 'home') {
+    // 现在的 handleRetry 逻辑需要重构或禁用，因为它依赖于旧的 API 流程
+    // handleRetry(); 
+    console.log("Enter pressed on error, but retry is currently disabled/needs rework.");
+    showError('请返回主页重试。');
   }
 }
 
@@ -425,15 +357,16 @@ provide('appData', {
   get musicTracks() { return musicTracks.value },
   get hasError() { return hasError.value },
   get errorMessage() { return errorMessage.value },
-  get currentEmotion() { return currentEmotion.value },
+  get currentEmotion() { return currentEmotion.value }, 
   get aiEmotionResult() { return aiEmotionResult.value },
   get userInputText() { return userInputText.value },
   get extendedAiAnalysis() { return extendedAiAnalysis.value },
   get isTestMode() { return isTestMode.value },
   // 方法
-  handleEmotionSubmitted,
+  handleUserInputChange, 
+  handleHomeViewResults, 
+  handleHomeViewError, 
   handleProcessingComplete,
-  fetchMusicRecommendations,
   handleRefresh,
   handleBack,
   handleRetry,
