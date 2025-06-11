@@ -38,6 +38,11 @@ const props = defineProps({
   autoStart: {
     type: Boolean,
     default: true
+  },
+  mode: {
+    type: String,
+    default: 'auto', // 'auto' | 'manual'
+    validator: (value) => ['auto', 'manual'].includes(value)
   }
 })
 
@@ -67,7 +72,7 @@ let animationTimer = null
 let stageCheckTimer = null
 
 onMounted(() => {
-  if (props.autoStart) {
+  if (props.autoStart && props.mode === 'auto') {
     startProgress()
   }
 })

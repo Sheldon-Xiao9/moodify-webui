@@ -40,7 +40,8 @@
         <ProgressLoader
           ref="progressRef"
           :duration="5000"
-          :auto-start="true"
+          :auto-start="isTestMode"
+          :mode="isTestMode ? 'auto' : 'manual'"
           @progress="handleProgress"
           @stage-change="handleStageChange"
           @complete="handleProcessComplete"
@@ -76,7 +77,7 @@ const aiEmotionResult = ref('')
 const currentProgress = ref(0)
 
 // 测试模式开关 - 可以通过环境变量或配置控制
-const isTestMode = ref(import.meta.env.DEV || !import.meta.env.VITE_API_URL)
+const isTestMode = ref(import.meta.env.DEV || import.meta.env.VITE_ENABLE_MOCK === 'true')
 
 // 计算属性
 const isInputActive = computed(() => store.isInputActive)
@@ -189,7 +190,18 @@ const processEmotionWithAI = async (emotionText) => {
       aiEmotionResult.value = mockAIResult.emotion
     } else {
       // 生产模式：实际的后端调用逻辑
-      const response = await fetch('/api/analyze-emotion', {
+      console.log('Running in production mode - calling real backend APIs')
+      
+      const progressLoader = progressRef.value
+      
+      // 第一阶段：AI解析情绪中 (0-40%)
+      if (progressLoader) {
+        progressLoader.setProgress(5)
+        progressLoader.jumpToStage(0)
+      }
+      
+      // 调用情绪分析API
+      const emotionResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/emotion/analyze-emotion`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -197,18 +209,77 @@ const processEmotionWithAI = async (emotionText) => {
         body: JSON.stringify({ text: emotionText })
       })
       
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
+      if (!emotionResponse.ok) {
+        throw new Error(`Emotion API error! status: ${emotionResponse.status}`)
       }
       
-      const data = await response.json()
-      aiEmotionResult.value = data.emotion
+      const emotionData = await emotionResponse.json()
+      aiEmotionResult.value = emotionData.emotion
+      
+      // 第二阶段：匹配音频特征 (40-80%)
+      if (progressLoader) {
+        progressLoader.setProgress(40)
+        progressLoader.jumpToStage(1)
+      }
+      
+      // 调用音乐推荐API
+      const recommendResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/recommend`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          vector: emotionData.vector,
+          top_k: 20
+        })
+      })
+      
+      if (!recommendResponse.ok) {
+        throw new Error(`Recommend API error! status: ${recommendResponse.status}`)
+      }
+      
+      const recommendData = await recommendResponse.json()
+      
+      // 第三阶段：生成个性歌单 (80-100%)
+      if (progressLoader) {
+        progressLoader.setProgress(85)
+        progressLoader.jumpToStage(2)
+      }
+      
+      // 将推荐结果存储起来，供后续使用
+      if (appData.handleRecommendationResult) {
+        appData.handleRecommendationResult({
+          emotion: emotionData.emotion,
+          analysis: emotionData.analysis,
+          tracks: recommendData.tracks,
+          total: recommendData.total
+        })
+      }
+      
+      // 完成处理
+      setTimeout(() => {
+        if (progressLoader) {
+          progressLoader.completeProgress()
+        }
+      }, 500)
     }
     
   } catch (error) {
-    console.error('AI情绪分析失败:', error)
-    // 错误处理：使用默认情绪
+    console.error('处理失败:', error)
+    
+    // 错误处理：设置进度条完成并使用默认值
+    const progressLoader = progressRef.value
+    if (progressLoader && !isTestMode.value) {
+      progressLoader.setProgress(100)
+      progressLoader.completeProgress()
+    }
+    
     aiEmotionResult.value = isTestMode.value ? '快乐' : '中性'
+    
+    // 通知用户发生了错误
+    if (appData.handleProcessingError) {
+      appData.handleProcessingError(error.message)
+    }
   }
 }
 
