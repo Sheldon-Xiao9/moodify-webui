@@ -285,11 +285,12 @@ const processEmotionWithAI = async (emotionText) => {
       // 将结果传输到 App.vue
       if (appData.handleHomeViewResults) {
         appData.handleHomeViewResults({
-          emotion: emotionData.emotion,
+          emotionAI: emotionData.emotion,
           analysis: emotionData.analysis,
           tracks: recommendData.tracks,
           total: recommendData.total,
-          userInput: emotionText
+          userInput: emotionText,
+          vector: emotionData.vector
         });
       }
       

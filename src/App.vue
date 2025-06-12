@@ -24,7 +24,7 @@
 </template>
 
 <script setup>
-import { ref, provide, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, provide, onMounted, onUnmounted, nextTick, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAnimationStore } from '@/stores/animations'
 import AppContainer from '@/components/layout/AppContainer.vue'
@@ -43,11 +43,15 @@ const hasError = ref(false)
 const errorMessage = ref('')
 const showErrorToast = ref(false)
 const toastMessage = ref('')
-const currentEmotion = ref(null)
-const aiEmotionResult = ref('')
-const userInputText = ref('')
-const extendedAiAnalysis = ref('')
-const homeViewApiResults = ref(null);
+const currentEmotion = ref(null) 
+const aiEmotionResult = ref('') 
+const userInputText = ref('') 
+const extendedAiAnalysis = ref('') 
+const homeViewApiResults = ref(null); 
+const emotionVector = ref(null);
+const currentPageForRecommendations = ref(1);
+const totalRecommendationsAvailable = ref(0);
+const isLoadingMoreTracks = ref(false);
 
 // 测试模式检测
 const isTestMode = ref(import.meta.env.DEV || !import.meta.env.VITE_API_BASE_URL)
@@ -97,12 +101,15 @@ const initializeApp = async () => {
 const handleUserInputChange = (text) => {
   console.log('App.vue: User input text received:', text);
   userInputText.value = text;
-  currentEmotion.value = { text: text };
+  currentEmotion.value = { text: text }; 
   musicTracks.value = [];
   extendedAiAnalysis.value = '';
   aiEmotionResult.value = ''; 
   homeViewApiResults.value = null;
-  hasError.value = false;
+  emotionVector.value = null;
+  currentPageForRecommendations.value = 1;
+  totalRecommendationsAvailable.value = 0;
+  hasError.value = false; 
   isLoadingTracks.value = true; 
 };
 
@@ -111,9 +118,12 @@ const handleHomeViewResults = (results) => {
   console.log('App.vue: Results received from HomeView:', results);
   musicTracks.value = results.tracks || [];
   extendedAiAnalysis.value = results.analysis || ''; 
-  aiEmotionResult.value = results.emotion || '';   
+  aiEmotionResult.value = results.emotionAI || '';
   userInputText.value = results.userInput || userInputText.value; 
-  homeViewApiResults.value = results; 
+  emotionVector.value = results.vector || null;
+  totalRecommendationsAvailable.value = results.total || 0;
+  currentPageForRecommendations.value = 1;
+  homeViewApiResults.value = results;
   isLoadingTracks.value = false; 
   hasError.value = false; 
 };
@@ -126,6 +136,9 @@ const handleHomeViewError = (message) => {
   hasError.value = true; 
   musicTracks.value = []; 
   extendedAiAnalysis.value = '';
+  emotionVector.value = null;
+  currentPageForRecommendations.value = 1;
+  totalRecommendationsAvailable.value = 0;
   setTimeout(() => {
      if (route.name !== 'home' && hasError.value) { 
          handleBack();
@@ -142,27 +155,23 @@ const handleProcessingComplete = () => {
     return; 
   }
 
-  if (!homeViewApiResults.value && musicTracks.value.length === 0 && !isTestMode.value) {
-    console.warn('App.vue: No recommendation data available at processing complete for non-test mode.');
-    showError('未能获取推荐结果数据，请重试。');
-    setTimeout(() => {
-        if (route.name !== 'home') handleBack();
-    }, 5000);
-    return;
+  if (!isTestMode.value && (!homeViewApiResults.value || !emotionVector.value)) {
+     console.warn('App.vue: No recommendation data or vector available at processing complete for non-test mode.');
+     showError('未能获取推荐结果数据，请重试。');
+     setTimeout(() => {
+         if (route.name !== 'home') handleBack();
+     }, 5000);
+     return;
   }
   
-  if (isTestMode.value && !homeViewApiResults.value && musicTracks.value.length > 0) {
+  if (isTestMode.value && musicTracks.value.length > 0 && !homeViewApiResults.value) {
       console.log('App.vue: Test mode proceeding with locally generated mock tracks.');
       if (!aiEmotionResult.value) aiEmotionResult.value = '快乐'; 
       if (!extendedAiAnalysis.value) extendedAiAnalysis.value = generateMockAiAnalysis(aiEmotionResult.value);
       if (!userInputText.value && currentEmotion.value) userInputText.value = currentEmotion.value.text;
-  } else if (!homeViewApiResults.value && !isTestMode.value) {
-      console.error("App.vue: Critical - No results and not in test mode, but error not caught earlier.");
-      showError('发生意外错误，无法展示结果。');
-      setTimeout(() => {
-        if (route.name !== 'home') handleBack();
-      }, 5000);
-      return;
+      // 测试模式下代码没有向量数据
+      totalRecommendationsAvailable.value = musicTracks.value.length;
+      currentPageForRecommendations.value = 1;
   }
   
   nextTick(() => {
@@ -170,7 +179,7 @@ const handleProcessingComplete = () => {
       emotion: userInputText.value,       
       aiResult: aiEmotionResult.value,    
       tracks: musicTracks.value,
-      analysis: extendedAiAnalysis.value  
+      analysis: extendedAiAnalysis.value,
     }));
     
     router.push({ name: 'results' });
@@ -237,29 +246,98 @@ const generateMockTracks = (emotionData) => { // emotionData 应为 { text: '...
   }))
 }
 
-// 处理刷新
+// 处理刷新 - 获取下一页推荐
 const handleRefresh = async () => {
-  console.warn("App.vue: handleRefresh called. This function's logic is outdated and needs to be updated for the new HomeView-centric API flow.");
-  showError('刷新功能当前不可用，请返回主页重试。');
-  // 原始逻辑（现在已不可用）：
-  // if (!currentEmotion.value || !userInputText.value) { // Check userInputText as currentEmotion might be just {text: ...}
-  //   console.log('App.vue: No current emotion/input to refresh.');
-  //   // Optionally navigate back or show a more specific error
-  //   // handleBack(); 
-  //   return;
-  // }
-  
-  // try {
-  //   // This implies fetchMusicRecommendations is still defined and works, which is not the case with the new flow.
-  //   // We need to re-trigger the process from HomeView if a refresh is desired.
-  //   // For now, this function is disabled.
-  //   // await fetchMusicRecommendations(currentEmotion.value); // currentEmotion.value needs to be the full object for this old call
-  // } catch (error) {
-  //   showError('刷新失败，请稍后重试');
-  // }
-}
+  if (isLoadingMoreTracks.value) return; // 防止重复请求
 
-// 处理返回
+  if (isTestMode.value) {
+    console.log('App.vue: Refresh clicked in test mode. Displaying current mock tracks.');
+    // 对于测试模式，直接使用当前的 mock 数据
+    isLoadingMoreTracks.value = true;
+    setTimeout(() => { // 模拟加载延迟
+      isLoadingMoreTracks.value = false;
+      showError('测试模式：刷新会显示相同的模拟歌曲。');
+    }, 300);
+    return;
+  }
+
+  if (!emotionVector.value) {
+    showError('无法刷新：缺少情绪数据。');
+    return;
+  }
+
+  isLoadingMoreTracks.value = true;
+  hasError.value = false;
+
+  let nextPage = currentPageForRecommendations.value + 1;
+  const pageSize = 6; // 当前每页推荐的数量
+  const topKForFaiss = 30; // 后端使用的 FAISS 候选池大小
+
+  // 如果当前页数超过总推荐数，则循环回到第一页
+  if ((currentPageForRecommendations.value * pageSize) >= totalRecommendationsAvailable.value && totalRecommendationsAvailable.value > 0) {
+    nextPage = 1;
+    console.log('App.vue: Refreshing, looping back to page 1');
+  }
+  
+  console.log(`App.vue: Refreshing recommendations. Current page: ${currentPageForRecommendations.value}, Next page: ${nextPage}, Total available: ${totalRecommendationsAvailable.value}`);
+
+  try {
+    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/recommend`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${import.meta.env.VITE_API_TOKEN || ''}`
+      },
+      body: JSON.stringify({
+        vector: emotionVector.value,
+        top_k: topKForFaiss, // 后端利用 FAISS 获取的候选池大小
+        page: nextPage,
+        page_size: pageSize 
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ detail: '刷新时发生未知错误' }));
+      throw new Error(errorData.detail || `API Error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    if (data.tracks && data.tracks.length > 0) {
+      musicTracks.value = data.tracks;
+      currentPageForRecommendations.value = nextPage;
+      totalRecommendationsAvailable.value = data.total; // 动态更新总推荐数
+      // 更新 sessionStorage
+      sessionStorage.setItem('moodify_emotion_data', JSON.stringify({
+        emotion: userInputText.value,       
+        aiResult: aiEmotionResult.value,    
+        tracks: musicTracks.value, // 当前页的推荐曲目
+        analysis: extendedAiAnalysis.value,
+        // vector: emotionVector.value, // optional
+        // currentPage: currentPageForRecommendations.value, // optional
+        // totalAvailable: totalRecommendationsAvailable.value // optional
+      }));
+    } else {
+      // 当没有更多推荐时，检查是否已经循环到第一页
+      // 如果循环到第一页且仍然没有结果，则提示用户
+      if (nextPage > 1 && currentPageForRecommendations.value !== 1) {
+         console.log('App.vue: No more tracks to refresh. Looping to page 1.');
+         currentPageForRecommendations.value = 0;
+         await handleRefresh();
+      } else {
+        showError('没有更多推荐了。');
+      }
+    }
+  } catch (error) {
+    console.error('App.vue: Failed to refresh recommendations:', error);
+    showError(error.message || '刷新推荐失败，请稍后重试。');
+    hasError.value = true;
+  } finally {
+    isLoadingMoreTracks.value = false;
+  }
+};
+
+
+// 处理返回 (兼做重试/重新开始)
 const handleBack = () => {
   sessionStorage.removeItem('moodify_emotion_data')
   musicTracks.value = []
@@ -268,60 +346,36 @@ const handleBack = () => {
   userInputText.value = ''
   extendedAiAnalysis.value = ''
   homeViewApiResults.value = null;
+  emotionVector.value = null;
+  currentPageForRecommendations.value = 1;
+  totalRecommendationsAvailable.value = 0;
   hasError.value = false
   isLoadingTracks.value = false
-  store.resetState();
+  isLoadingMoreTracks.value = false;
+  store.resetState(); 
   router.push({ name: 'home' })
   console.log('App.vue: Returned to home view, state reset.')
 }
 
-// 处理重试
-const handleRetry = async () => {
-  console.warn("App.vue: handleRetry called. This function's logic is outdated and needs to be updated.");
-  showError('重试功能当前不可用，请返回主页重新开始。');
-  // 原始逻辑（现在已不可用）：
-  // if (!currentEmotion.value || !userInputText.value) {
-  //   handleBack();
-  //   return;
-  // }
-  
-  // try {
-  //   // This implies fetchMusicRecommendations is still defined and works, which is not the case with the new flow.
-  //   // await fetchMusicRecommendations(currentEmotion.value);
-  // } catch (error) {
-  //   showError('重试失败，请检查网络连接');
-  // }
+// 处理重试 - 现在只是返回首页
+const handleRetry = () => {
+  console.log("App.vue: Retry requested. Navigating to home.");
+  handleBack(); 
 }
 
 // 处理卡片操作
-const handleCardExpand = (track) => {
-  console.log('Card expanded:', track.name)
-}
-
-const handleCardCollapse = (track) => {
-  console.log('Card collapsed:', track.name)
-}
-
-const handleCardPlay = (track) => {
-  console.log('Playing track:', track.name)
-}
-
-const handleCardPause = (track) => {
-  console.log('Paused track:', track.name)
-}
+const handleCardExpand = (track) => { console.log('Card expanded:', track.name) }
+const handleCardCollapse = (track) => { console.log('Card collapsed:', track.name) }
+const handleCardPlay = (track) => { console.log('Playing track:', track.name) }
+const handleCardPause = (track) => { console.log('Paused track:', track.name) }
 
 // 错误处理
 const showError = (message) => {
   toastMessage.value = message
   showErrorToast.value = true
-  setTimeout(() => {
-    hideErrorToast()
-  }, 5000)
+  setTimeout(() => { hideErrorToast() }, 5000)
 }
-
-const hideErrorToast = () => {
-  showErrorToast.value = false
-}
+const hideErrorToast = () => { showErrorToast.value = false }
 
 // 全局错误处理
 const handleGlobalError = (event) => {
@@ -331,7 +385,7 @@ const handleGlobalError = (event) => {
 
 // 页面卸载前处理
 const handleBeforeUnload = (event) => {
-  if (isLoadingTracks.value) {
+  if (isLoadingTracks.value || isLoadingMoreTracks.value) {
     event.preventDefault()
     event.returnValue = '正在处理中，确定要离开吗？'
   }
@@ -343,17 +397,14 @@ const handleKeyPress = (event) => {
     handleBack()
   }
   if (event.key === 'Enter' && hasError.value && route.name !== 'home') {
-    // 现在的 handleRetry 逻辑需要重构或禁用，因为它依赖于旧的 API 流程
-    // handleRetry(); 
-    console.log("Enter pressed on error, but retry is currently disabled/needs rework.");
-    showError('请返回主页重试。');
+    handleRetry();
   }
 }
 
 // 向子组件提供数据和方法
 provide('appData', {
-  // 使用 computed 或 getter 确保响应式
   get isLoadingTracks() { return isLoadingTracks.value },
+  get isLoadingMoreTracks() { return isLoadingMoreTracks.value },
   get musicTracks() { return musicTracks.value },
   get hasError() { return hasError.value },
   get errorMessage() { return errorMessage.value },
@@ -363,6 +414,8 @@ provide('appData', {
   get extendedAiAnalysis() { return extendedAiAnalysis.value },
   get isTestMode() { return isTestMode.value },
   // 方法
+  get currentPage() { return currentPageForRecommendations.value },
+  get totalAvailableTracks() { return totalRecommendationsAvailable.value },
   handleUserInputChange, 
   handleHomeViewResults, 
   handleHomeViewError, 

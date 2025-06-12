@@ -60,12 +60,13 @@
     <!-- 底部控制区域 -->
     <div class="bottom-controls">
       <!-- 刷新按钮 -->
-      <button 
+      <button
+        v-if="(appData.isTestMode && appData.musicTracks && appData.musicTracks.length > 0) || (!appData.isTestMode && appData.totalAvailableTracks > 0 && appData.musicTracks && appData.musicTracks.length > 0)"
         class="refresh-button btn-circular"
         @click="handleRefresh"
-        :disabled="isRefreshing"
-        :class="{ 'refreshing': isRefreshing }"
-        title="重新推荐"
+        :disabled="appData.isLoadingMoreTracks"
+        :class="{ 'refreshing': appData.isLoadingMoreTracks }"
+        title="换一批推荐"
       >
         <svg class="refresh-icon" viewBox="0 0 24 24" fill="currentColor">
           <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
@@ -191,13 +192,30 @@ import DynamicBackground from '@/components/layout/DynamicBackground.vue'
 import StaticEmoji from '@/components/core/StaticEmoji.vue'
 
 // 注入App.vue提供的数据和方法
-const appData = inject('appData', {})
+const appData = inject('appData', {
+  // 默认值，确保不会报错
+  musicTracks: [],
+  isLoadingTracks: false,
+  hasError: false,
+  errorMessage: '未知错误',
+  userInputText: '',
+  aiEmotionResult: '',
+  extendedAiAnalysis: '',
+  isTestMode: false,
+  isLoadingMoreTracks: false, 
+  totalAvailableTracks: 0, 
+  currentPage: 1, 
+  handleRefresh: () => console.warn("handleRefresh not provided to ResultsView"),
+  handleBack: () => console.warn("handleBack not provided to ResultsView"),
+  handleRetry: () => console.warn("handleRetry not provided to ResultsView"),
+})
 
 const store = useAnimationStore()
 const { stopAll } = useAudioPlayer()
 
-// 测试模式开关 - 跟HomeView一样的逻辑
-const isTestMode = ref(import.meta.env.DEV || !import.meta.env.VITE_API_URL)
+// 使用来自 appData 的 isTestMode 属性，如果未定义则使用来自环境变量的值
+const isTestMode = computed(() => appData.isTestMode !== undefined ? appData.isTestMode : (import.meta.env.DEV || !import.meta.env.VITE_API_URL))
+
 
 // 测试数据 - 只在测试模式下使用
 const testData = ref({
@@ -206,7 +224,7 @@ const testData = ref({
 })
 
 // 响应式数据
-const isRefreshing = ref(false)
+// const isRefreshing = ref(false) // 移除，使用 appData.isLoadingMoreTracks
 const expandedCard = ref(null)
 
 // AI分析卡片相关状态
@@ -446,24 +464,17 @@ const handleCardPause = (track) => {
 
 // 处理刷新
 const handleRefresh = async () => {
-  if (isRefreshing.value) return
-  
-  isRefreshing.value = true
+  // isLoadingMoreTracks 现在由 App.vue 控制
+  if (appData.isLoadingMoreTracks) return;
   
   // 停止所有音频
   stopAll()
   
-  try {
-    await new Promise(resolve => setTimeout(resolve, 500)) // 模拟延迟
-    // 直接调用注入的刷新方法
-    if (appData.handleRefresh) {
-      await appData.handleRefresh()
-    }
-  } finally {
-    setTimeout(() => {
-      isRefreshing.value = false
-    }, 1000)
+  // 直接调用注入的刷新方法
+  if (appData.handleRefresh) {
+    await appData.handleRefresh()
   }
+  // 加载状态 (isRefreshing / isLoadingMoreTracks) 现在由 App.vue 控制
 }
 
 // 处理返回
