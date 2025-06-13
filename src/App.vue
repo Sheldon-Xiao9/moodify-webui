@@ -116,7 +116,15 @@ const handleUserInputChange = (text) => {
 // 当 HomeView 完成 API 调用并返回结果时由 HomeView 调用
 const handleHomeViewResults = (results) => {
   console.log('App.vue: Results received from HomeView:', results);
-  musicTracks.value = results.tracks || [];
+      musicTracks.value = (results.tracks || []).map(t => ({
+        ...t,
+        albumCover: t.album_cover,
+        albumName: t.album_name,
+        previewUrl: t.preview_url,
+        spotifyUrl: t.spotify_url,
+        duration: t.duration_ms,
+        releaseDate: t.release_date
+      }));
   extendedAiAnalysis.value = results.analysis || ''; 
   aiEmotionResult.value = results.emotionAI || '';
   userInputText.value = results.userInput || userInputText.value; 
@@ -303,7 +311,15 @@ const handleRefresh = async () => {
 
     const data = await response.json();
     if (data.tracks && data.tracks.length > 0) {
-      musicTracks.value = data.tracks;
+        musicTracks.value = data.tracks.map(t => ({
+          ...t,
+          albumCover: t.album_cover,
+          albumName: t.album_name,
+          previewUrl: t.preview_url,
+          spotifyUrl: t.spotify_url,
+          duration: t.duration_ms,
+          releaseDate: t.release_date
+        }));
       currentPageForRecommendations.value = nextPage;
       totalRecommendationsAvailable.value = data.total; // 动态更新总推荐数
       // 更新 sessionStorage
