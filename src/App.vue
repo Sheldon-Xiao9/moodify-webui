@@ -116,15 +116,24 @@ const handleUserInputChange = (text) => {
 // 当 HomeView 完成 API 调用并返回结果时由 HomeView 调用
 const handleHomeViewResults = (results) => {
   console.log('App.vue: Results received from HomeView:', results);
-      musicTracks.value = (results.tracks || []).map(t => ({
-        ...t,
-        albumCover: t.album_cover,
-        albumName: t.album_name,
-        previewUrl: t.preview_url,
-        spotifyUrl: t.spotify_url,
-        duration: t.duration_ms,
-        releaseDate: t.release_date
-      }));
+  const rawTracks = Array.isArray(results.tracks) ? results.tracks : [];
+  musicTracks.value = rawTracks.map(t => {
+    if (typeof t !== 'object' || t === null) {
+      return null; 
+    }
+    return {
+      ...t,
+      id: t.id,
+      name: t.name,
+      artist: t.artist,
+      albumCover: t.album_cover,
+      albumName: t.album_name,
+      previewUrl: t.preview_url,
+      spotifyUrl: t.spotify_url,
+      duration: t.duration_ms,
+      releaseDate: t.release_date,
+    };
+  }).filter(track => track !== null);
   extendedAiAnalysis.value = results.analysis || ''; 
   aiEmotionResult.value = results.emotionAI || '';
   userInputText.value = results.userInput || userInputText.value; 
@@ -428,6 +437,8 @@ provide('appData', {
   get aiEmotionResult() { return aiEmotionResult.value },
   get userInputText() { return userInputText.value },
   get extendedAiAnalysis() { return extendedAiAnalysis.value },
+  get chosenSuperGenre() { return chosenSuperGenre.value },
+  get suggestedTrackGenres() { return suggestedTrackGenres.value },
   get isTestMode() { return isTestMode.value },
   // 方法
   get currentPage() { return currentPageForRecommendations.value },

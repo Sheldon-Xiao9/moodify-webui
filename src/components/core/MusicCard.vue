@@ -49,12 +49,12 @@
           <!-- 情绪标签 -->
           <div class="emotion-tags" v-if="track.emotions && track.emotions.length">
             <span 
-              v-for="emotion in track.emotions.slice(0, 2)" 
-              :key="emotion"
-              class="emotion-tag"
-              :style="{ backgroundColor: getEmotionColor(emotion) }"
+              v-for="genre in track.super_genres.slice(0, 3)"  
+              :key="`super-genre-${genre}`"
+              class="genre-tag" 
+              :style="{ backgroundColor: getTagColor(genre) }"
             >
-              {{ emotion }}
+              {{ genre }}
             </span>
           </div>
           
@@ -397,25 +397,6 @@ const openSpotify = () => {
   }
 }
 
-// 获取情绪颜色
-const getEmotionColor = (emotion) => {
-  const colors = {
-    happy: '#FFD166',
-    sad: '#6A7BDB',
-    energetic: '#EF476F',
-    calm: '#06D6A0',
-    romantic: '#E91E63',
-    melancholy: '#9C27B0',
-    excited: '#FF5722',
-    peaceful: '#4CAF50',
-    angry: '#F44336',
-    annoyed: '#FF9800',
-    intense: '#9C27B0',
-    pumped: '#FF5722'
-  }
-  return colors[emotion.toLowerCase()] || '#FFD166'
-}
-
 // 处理图片加载
 const handleImageLoad = () => {
   isImageLoaded.value = true
@@ -667,14 +648,14 @@ defineExpose({
   }
 }
 
-.emotion-tags {
+.genre-tags {
   display: flex;
   gap: 0.25rem;
   flex-wrap: wrap;
   margin-bottom: 0.3rem;
 }
 
-.emotion-tag {
+.genre-tag {
   padding: 0.15rem 0.45rem;
   border-radius: 8px;
   font-size: 0.65rem;

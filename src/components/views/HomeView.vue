@@ -193,7 +193,7 @@ const processEmotionWithAI = async (emotionText) => {
     if (isTestMode.value) {
       // 测试模式：使用模拟的AI分析
       console.log('Running in test mode - using mock AI analysis')
-      const mockAIResult = await mockAIAnalysis(emotionText); // This is the primary mockAIAnalysis call
+      const mockAIResult = await mockAIAnalysis(emotionText); 
       aiEmotionResult.value = mockAIResult.emotion;
 
       // 模拟进度条更新
@@ -215,9 +215,12 @@ const processEmotionWithAI = async (emotionText) => {
         appData.handleHomeViewResults({
           emotion: mockAIResult.emotion,
           analysis: generateMockAiAnalysisForApp(mockAIResult.emotion), 
+          chosen_super_genre: null,
+          suggested_track_genres: [],
           tracks: generateMockTracksForApp(mockAIResult.emotion), 
           total: (generateMockTracksForApp(mockAIResult.emotion)).length,
-          userInput: emotionText
+          userInput: emotionText,
+          vector: null
         });
       }
       
@@ -239,14 +242,13 @@ const processEmotionWithAI = async (emotionText) => {
       // 调用情绪分析API
       const emotionResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/analyze-emotion`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: emotionText })
       })
       
       if (!emotionResponse.ok) {
-        throw new Error(`Emotion API error! status: ${emotionResponse.status}`)
+        const errorBody = await emotionResponse.json().catch(() => ({ detail: `Emotion API error! status: ${emotionResponse.status}` }));
+        throw new Error(errorBody.detail || `Emotion API error! status: ${emotionResponse.status}`);
       }
       
       const emotionData = await emotionResponse.json()
@@ -259,19 +261,26 @@ const processEmotionWithAI = async (emotionText) => {
       }
       
       // 调用音乐推荐API
+      // 从 emotionData 中获取 AI 建议的流派信息
+      const chosenSuperGenre = emotionData.chosen_super_genre || null;
+      const suggestedTrackGenres = emotionData.suggested_track_genres || [];
+
+      console.log('HomeView: Preparing /recommend call with vector, chosen_super_genre:', chosenSuperGenre, 'suggested_track_genres:', suggestedTrackGenres);
+
       const recommendResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/recommend`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           vector: emotionData.vector,
-          top_k: 20
+          top_k: 30, 
+          chosen_super_genre: chosenSuperGenre,
+          suggested_track_genres: suggestedTrackGenres
         })
       })
       
       if (!recommendResponse.ok) {
-        throw new Error(`Recommend API error! status: ${recommendResponse.status}`)
+        const errorBody = await recommendResponse.json().catch(() => ({ detail: `Recommend API error! status: ${recommendResponse.status}` }));
+        throw new Error(errorBody.detail || `Recommend API error! status: ${recommendResponse.status}`);
       }
       
       const recommendData = await recommendResponse.json()
@@ -287,10 +296,12 @@ const processEmotionWithAI = async (emotionText) => {
         appData.handleHomeViewResults({
           emotionAI: emotionData.emotion,
           analysis: emotionData.analysis,
-          tracks: recommendData.tracks,
-          total: recommendData.total,
+          chosen_super_genre: chosenSuperGenre, 
+          suggested_track_genres: suggestedTrackGenres, 
+          tracks: recommendData && recommendData.tracks ? recommendData.tracks : [], 
+          total: recommendData && recommendData.total ? recommendData.total : 0, 
           userInput: emotionText,
-          vector: emotionData.vector
+          vector: emotionData.vector 
         });
       }
       
@@ -298,7 +309,7 @@ const processEmotionWithAI = async (emotionText) => {
       // HomeView 的 handleProcessComplete 会被调用来处理最终结果和UI更新
       // 从而保证进度条动画完成后，App.vue 可以处理结果展示和错误处理等逻辑
       if (progressLoader) {
-         setTimeout(() => progressLoader.completeProgress(), 500) // 给进度条动画留点时间
+         setTimeout(() => progressLoader.completeProgress(), 500) 
       }
     }
     
@@ -328,14 +339,13 @@ const generateMockTracksForApp = (emotion) => {
   const mockEmotionData = { aiResult: emotion, mood: emotion.toLowerCase() };
   // 基础模拟数据
   return [
-    { name: `${emotion} Track 1`, artist: 'Test Artist', genre: 'Test Genre', id:'mock1' },
-    { name: `${emotion} Track 2`, artist: 'Test Artist', genre: 'Test Genre', id:'mock2' },
+    { name: `${emotion} Track 1`, artist: 'Test Artist', genre: 'Test Genre', id:'mock1', album_cover: 'https://picsum.photos/300/300?random=mock1', album_name: 'Mock Album 1', preview_url: '#', spotify_url: '#', duration_ms: 180000, release_date: '2023-01-01' },
+    { name: `${emotion} Track 2`, artist: 'Test Artist', genre: 'Test Genre', id:'mock2', album_cover: 'https://picsum.photos/300/300?random=mock2', album_name: 'Mock Album 2', preview_url: '#', spotify_url: '#', duration_ms: 200000, release_date: '2023-02-01' },
   ];
 };
 
 const generateMockAiAnalysisForApp = (emotion) => {
-    // 简化版本
-    return `这是关于"${emotion}"情绪的模拟AI分析文本。`;
+    return `这是关于"${emotion}"情绪的模拟AI分析文本。这是测试模式下的内容。`;
 };
 
 
