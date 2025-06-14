@@ -78,10 +78,6 @@
             :style="{ width: `${playbackProgress}%` }"
           ></div>
         </div>
-        <div class="time-info">
-          <span>{{ formatTime(currentTime) }}</span>
-          <span>{{ formatTime(duration) }}</span>
-        </div>
       </div>
       
       <!-- 扩展视图内容 -->
@@ -688,35 +684,33 @@ defineExpose({
   }
 }
 
+// 简化后的进度条容器 (非展开状态)
 .progress-container {
   position: absolute;
   bottom: 0;
   left: 0;
   right: 0;
-  background: rgba(0, 0, 0, 0.8);
-  padding: 0.5rem;
+  width: 100%; // 确保宽度与卡片一致
+  background: transparent; // 去除背景遮罩
+  padding: 0; // 去除内边距
+  // z-index: 1; // 确保在卡片内容之上，如果需要
 }
 
+// 简化后的进度条本身
 .progress-bar {
   width: 100%;
-  height: 3px;
+  height: 4px;
   background: rgba(255, 255, 255, 0.2);
-  border-radius: 2px;
+  // border-radius: 0;
   overflow: hidden;
-  margin-bottom: 0.25rem;
 }
 
+// 简化后的进度条填充部分
 .progress-fill {
   height: 100%;
   background: linear-gradient(90deg, #FFD166, #EF476F);
-  transition: width 0.3s ease;
-}
-
-.time-info {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.7rem;
-  color: rgba(255, 255, 255, 0.8);
+  transition: width 0.3s ease; // 保留过渡效果
+  // border-radius: 0;
 }
 
 // 背景遮罩
