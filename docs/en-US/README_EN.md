@@ -37,7 +37,7 @@
 
 ## About
 
-Moodify is an innovative music recommendation frontend application designed to analyze user emotional expressions through advanced AI technology and intelligently recommend music that best matches their current mood. Built with Vue 3 as the core framework and combined with modern frontend technology stack, it provides users with a smooth, intuitive, and delightful interactive experience. This repository is the frontend implementation of Moodify. If you want to learn about the backend, please visit [Sheldon-Xiao/moodify]().
+Moodify is an innovative music recommendation frontend application designed to analyze user emotional expressions through advanced AI technology and intelligently recommend music that best matches their current mood. Built with Vue 3 as the core framework and combined with modern frontend technology stack, it provides users with a smooth, intuitive, and delightful interactive experience. This repository is the frontend implementation of Moodify. If you want to learn about the backend, please visit [Sheldon-Xiao/moodify](https://github.com/Sheldon-Xiao9/moodify).
 
 - **Design Philosophy** We firmly believe that music is the carrier of emotions, and every mood has its perfect musical companion. Traditional music recommendation systems often rely on user's historical playback records or simple category tags, while Moodify aims to break through these limitations by understanding users' real emotional needs and creating truly personalized and emotionally-driven music recommendation experiences. Whether you're feeling joyful on a sunny afternoon or contemplative during late night hours, Moodify can find the music that perfectly matches your current emotional state.
 
@@ -90,7 +90,7 @@ This script automatically handles environment checking, dependency installation,
 
 ### Configuration Instructions
 
-The project uses environment variables for configuration management. Copy the `.env.example` file to `.env` and modify configurations as needed:
+The project uses environment variables for configuration management. Copy the `.env.example` file to `.env.development` or `.env.production` and modify configurations as needed:
 
 ```bash
 # API service address
@@ -188,7 +188,7 @@ This project is open-sourced under the MIT License. The MIT License is a permiss
   - This project is provided "as is" without any express or implied warranties
   - Authors are not responsible for any losses that may result from using this project
 
-For complete license text, please refer to the [LICENSE](LICENSE) file in the project root directory.
+For complete license text, please refer to the [LICENSE](../../LICENSE) file in the project root directory.
 
 ### Third-party Dependencies
 

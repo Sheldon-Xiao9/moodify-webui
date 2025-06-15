@@ -19,8 +19,7 @@ Moodify is an AI-powered intelligent music recommendation system. Whether you're
 - Add more interaction states to MusicCard component, such as loading state, error state, favorite state visual feedback
 
 ### Advanced Tasks (`help wanted`)
-- Deep optimization of GSAP animation library usage, reducing animation CPU and memory consumption, achieving 60fps smooth animations, handling animation conflicts and performance bottlenecks
-- Implement advanced Canvas animation optimization techniques based on existing canvasRenderer.js for off-screen rendering, object pool management, requestAnimationFrame optimization
+- Implement advanced Canvas animation optimization techniques, based on the existing canvasRenderer.js, for off-screen rendering, object pool management, and requestAnimationFrame optimization
 - Extend useAnimationController and useAudioPlayer composable functions, adding more complex animation control and audio processing logic
 - Optimize Pinia state management, extend animations.js store functionality, handle complex application state synchronization and error recovery
 - Implement user behavior-based preference learning mechanism, dynamically adjusting recommendation algorithm weights based on user history of emotion input, Spotify link clicks, etc.
@@ -29,22 +28,17 @@ Moodify is an AI-powered intelligent music recommendation system. Whether you're
 - Implement PWA functionality, adding Service Worker support, offline caching, push notifications and other modern web application features
 
 ### Bug Fixes
-- Fix Sass deprecation warnings by replacing all `@import` syntax with new `@use` syntax in components, resolving Dart Sass 3.0.0 compatibility issues
-- Resolve mixed-decls warnings by fixing declaration position issues after media queries in ResultsView.vue, avoiding future CSS behavior changes
-- Fix legacy-js-api warnings by upgrading Sass configuration to use modern APIs, avoiding compatibility issues
-- Resolve Vue Router component memory leak issues during route switching, cleaning up undestroyed timers, event listeners, and Canvas animation loops
-- Fix MusicCard component expand animation performance issues by optimizing transform and position calculation logic
-- Resolve SCSS style compatibility issues across different browsers, especially CSS Grid, Flexbox, CSS variable browser prefix handling
-- Fix EmotionInput component state synchronization issues during rapid input, preventing race conditions and animation conflicts
-- Resolve DynamicEmoji Canvas component memory leak issues by optimizing canvasRenderer.js resource management
+- Fix Sass deprecation warnings by replacing all `@import` syntax with the new `@use` syntax in components, resolving Dart Sass 3.0.0 compatibility issues.
+- Resolve mixed-decls warnings by fixing declaration position issues after media queries in ResultsView.vue, avoiding future CSS behavior changes.
+- Fix legacy-js-api warnings by upgrading Sass configuration to use modern APIs, avoiding compatibility issues.
 
 ### Feature Enhancements
 - Develop user music mood history functionality including data persistence storage, timeline view, statistical analysis, data export and other complete feature modules
 - Implement social sharing functionality allowing users to share their music moods to Weibo, WeChat, Twitter and other platforms, generating beautiful sharing cards
 - Build personalized theme customization system allowing users to customize color schemes, font sizes, animation speeds and other interface parameters, saving user preferences
 - Develop advanced audio control features including volume fade in/out, playback speed adjustment, audio effects processing, equalizer controls and other professional audio functions
-- Implement real-time collaborative listening functionality where multiple users can synchronously listen to the same song, supporting chat interaction, emotion synchronization, playlist sharing
-- Build intelligent playlist generation system automatically creating personalized playlists based on user's current emotion, time, weather and other factors
+- Enhance the display page for AI extension cards, implementing advanced features like dynamic emotion display, confidence level display, and multiple emotion combination displays, allowing users to more intuitively understand AI analysis results.
+- Design and implement a day mode, providing features like light/dark theme switching, automatic theme switching based on time periods, and background switching under different themes to enhance user experience.
 - Develop music emotion data analysis dashboard providing users with detailed listening habit analysis, emotion change trends, music preference evolution and other data insights
 - Implement cross-device synchronization functionality allowing users to sync playback progress, favorite lists, personal settings and other data across different devices
 
@@ -218,8 +212,8 @@ When rapidly inputting multiple emotion words consecutively, the DynamicEmoji co
 
 **Reproduction Steps**
 1. Open application homepage
-2. Quickly input "happy" in emotion input box
-3. Immediately delete and input "sad"
+2. Quickly input "XXX" in the emotion input box
+3. Immediately delete and input "XXXX"
 4. Repeat steps 2-3 about 10 times
 5. Observe Canvas area stuttering
 6. Continue operations for about 30 seconds until browser tab crashes
@@ -256,7 +250,7 @@ Title: [Feature] Add music playback history and personalized recommendation lear
 Hope to add user music playback history functionality and improve personalized recommendation algorithm based on historical data.
 
 **Problem/Need Background**
-Current recommendation system only considers current emotion state, doesn't account for user's long-term music preferences. User feedback hopes system can "remember" their music taste and provide more accurate recommendations.
+Current recommendation system only considers current emotion state, doesn't account for user's long-term music preferences. I hope the system can "remember" their music taste and provide more accurate recommendations.
 
 **Detailed Requirements**
 1. Playback History
@@ -271,14 +265,12 @@ Current recommendation system only considers current emotion state, doesn't acco
 
 **Use Cases**
 - Users often listen to classical music in "relaxed" state, system should prioritize classical recommendations
-- Long-term users want to view their music taste evolution trends
+- Can a music taste evolution trend be added? I want to see my music preference changes over different time periods.
 
 **Technical Implementation Suggestions (Optional)**
 - Use IndexedDB to store playback history
 - Implement machine learning algorithms to analyze user preferences
 - Consider privacy protection, provide data clearing options
-
-**Priority**: Medium
 ```
 
 **❌ Poor feature request example:**
